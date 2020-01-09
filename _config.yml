@@ -9,3 +9,4 @@ exclude: ["README.md", "node_modules"]
 sass:
   style: compressed
 repository: abouolia/sticky-sidebar.git
+theme: jekyll-theme-cayman
