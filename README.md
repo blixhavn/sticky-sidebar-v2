@@ -1,4 +1,4 @@
-# Sticky Sidebar [![Build Status](https://travis-ci.org/blixhavn/sticky-sidebar.svg?branch=master)](https://travis-ci.org/blixhavn/sticky-sidebar)
+# Sticky Sidebar v2 [![Build Status](https://travis-ci.org/blixhavn/sticky-sidebar-v2.svg?branch=master)](https://travis-ci.org/blixhavn/sticky-sidebar-v2)
 
 Pure JavaScript plugin for making smart and high performance sticky sidebars, originally written by [Ahmed Bouhuolia](https://github.com/abouolia).
 
@@ -8,11 +8,11 @@ As the original project is currently inactive, this fork is an attempt to revive
 
 
 ## Examples
-[Basic Example](https://blixhavn.github.io/sticky-sidebar/examples/basic.html)
+[Basic Example](https://blixhavn.github.io/sticky-sidebar-v2/examples/basic.html)
 
-[Scrollable Sticky Element](https://blixhavn.github.io/sticky-sidebar/examples/scrollable-element.html)
+[Scrollable Sticky Element](https://blixhavn.github.io/sticky-sidebar-v2/examples/scrollable-element.html)
 
-For complete documentation and examples see [blixhavn.github.com/sticky-sidebar](http://blixhavn.github.com/sticky-sidebar)
+For complete documentation and examples see [blixhavn.github.com/sticky-sidebar-v2](http://blixhavn.github.com/sticky-sidebar-v2)
 
 
 ## Why is sticky sidebar so awesome?
@@ -26,14 +26,14 @@ For complete documentation and examples see [blixhavn.github.com/sticky-sidebar]
 
 ## Install
 
-You can download sticky sidebar jQuery plugin from Bowser, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
+You can download sticky sidebar v2 vjQuery plugin from Bowser, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
 
 #### Bower
 
 If you are using bower as package manager:
 
 ````
-bower install sticky-sidebar
+bower install sticky-sidebar-v2
 ````
 
 #### NPM
@@ -41,7 +41,7 @@ bower install sticky-sidebar
 If you are using NPM as package manager:
 
 ````
-npm install sticky-sidebar
+npm install sticky-sidebar-v2
 ````
 
 ## Usage
@@ -101,23 +101,22 @@ Make sure to include ``sticky-sidebar.js`` script file after ``jquery.js``.
 
 ## Usage with [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js)
 
-Sticky sidebar integrated with [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) to detect when sidebar or container is changed. To use resize sensor with this plugin just make sure to include ResizeSensor.js before `sticky-sidebar.js` code whether through module loader, bundle or event inclusion as a `<script>` and enable `resizeSensor` option (enabled by default) and it will works.
+Sticky Sidebar v2 integrated with [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) to detect when sidebar or container is changed. To use resize sensor with this plugin just make sure to include ResizeSensor.js before `sticky-sidebar.js` code whether through module loader, bundle or event inclusion as a `<script>` and enable `resizeSensor` option (enabled by default) and it will works.
 
 You can choose not to include `ResizeSensor.js` and sticky sidebar will continue work without any problem but without automatically detect resize changes.
 
 ## Browser Support
 
-Sticky sidebar works in all modern browsers including Internet Explorer 9 and above, but if you want it to work with IE9, should include [`requestAnimationFrame`](https://gist.github.com/paulirish/1579671) polyfill before sticky sidebar code.
+Sticky Sidebar v2 works in all modern browsers including Internet Explorer 9 and above, but if you want it to work with IE9, should include [`requestAnimationFrame`](https://gist.github.com/paulirish/1579671) polyfill before sticky sidebar code.
 
-If you have any issues with browser compatibility don’t hesitate to [Submit an issue](https://github.com/blixhavn/sticky-sidebar/issues/new).
+If you have any issues with browser compatibility don’t hesitate to [Submit an issue](https://github.com/blixhavn/sticky-sidebar-v2/issues/new).
 
 ## License
 
-Sticky Sidebar is released under the MIT license. Have at it.
+Sticky Sidebar v2 is released under the MIT license. Have at it.
 
 -------
 
-Made by Ahmed Bouhuolia
+Maintained by Øystein Blixhavn
 
-Maintainers:
-Øystein Blixhavn
+Originally made by Ahmed Bouhuolia

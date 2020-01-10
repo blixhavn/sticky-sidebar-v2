@@ -1,15 +1,20 @@
 {
-  "name": "sticky-sidebar",
-  "description": "A JavaScript plugin for making smart and high performance.",
-  "version": "3.3.1",
+  "name": "sticky-sidebar-v2",
+  "description": "A JavaScript plugin for making smart and high performance sticky sidebars.",
+  "version": "1.0.0",
   "authors": [
-    "Ahmed Bouhuolia <a.bouhuolia@gmail.com>"
+    "Øystein Blixhavn <oystein@blixhavn.no>"
   ],
   "license": "MIT",
   "main": "./sticky-sidebar.js",
   "keywords": [
     "sticky",
-    "sidebar"
+    "affix",
+    "fixed",
+    "sidebar",
+    "position",
+    "javascript",
+    "jquery"
   ],
   "ignore": [
     "node_modules",
@@ -18,7 +23,7 @@
     "docs/.sass-cache"
   ],
   "dependencies": {},
-  "homepage": "https://github.com/abouolia/sticky-sidebar",
+  "homepage": "https://github.com/blixhavn/sticky-sidebar-v2",
   "devDependencies": {
     "raf.js": "~0.0.4"
   }
