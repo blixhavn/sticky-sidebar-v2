@@ -1,6 +1,6 @@
 /**
  * Sticky Sidebar v2 JavaScript Plugin.
- * @version 1.0.0
+ * @version 1.0.1
  * @author Øystein Blixhavn <oystein@blixhavn.no>
  * @license The MIT License (MIT)
  */
@@ -11,7 +11,7 @@ const StickySidebar = (() => {
     // ---------------------------------
     //
     const EVENT_KEY = '.stickySidebar';
-    const VERSION   = '1.0.0';
+    const VERSION   = '1.0.1';
   
     const DEFAULTS = {
       /**
