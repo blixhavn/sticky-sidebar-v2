@@ -26,14 +26,14 @@ For complete documentation and examples see [blixhavn.github.com/sticky-sidebar-
 
 ## Install
 
-You can download sticky sidebar v2 vjQuery plugin from Bowser, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
+You can download sticky sidebar v2 vjQuery plugin from Yarn, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
 
-#### Bower
+#### Yarn
 
-If you are using bower as package manager:
+If you are using Yarn as package manager:
 
 ````
-bower install sticky-sidebar-v2
+yarn add sticky-sidebar-v2
 ````
 
 #### NPM
