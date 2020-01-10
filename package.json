@@ -1,11 +1,11 @@
 {
-  "name": "sticky-sidebar",
-  "description": "A JavaScript plugin for making smart and high performance.",
+  "name": "sticky-sidebar-v2",
+  "description": "A JavaScript plugin for making smart and high performance sticky sidebars.",
   "version": "1.0.0",
   "author": "Øystein Blixhavn",
   "email": "oystein@blixhavn.no",
   "license": "The MIT License (MIT)",
-  "homepage": "https://github.com/blixhavn/sticky-sidebar",
+  "homepage": "https://github.com/blixhavn/sticky-sidebar-v2",
   "main": "./dist/sticky-sidebar.js",
   "module": "./src/sticky-sidebar.js",
   "keywords": [
@@ -13,6 +13,7 @@
     "affix",
     "fixed",
     "sidebar",
+    "position",
     "javascript",
     "jquery"
   ],
@@ -21,7 +22,7 @@
     "src"
   ],
   "bugs": {
-    "url": "https://github.com/blixhavn/sticky-sidebar/issues"
+    "url": "https://github.com/blixhavn/sticky-sidebar-v2/issues"
   },
   "scripts": {
     "build": "gulp",
@@ -29,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/blixhavn/sticky-sidebar.git"
+    "url": "https://github.com/blixhavn/sticky-sidebar-v2.git"
   },
   "devDependencies": {
     "babel": "^6.23.0",

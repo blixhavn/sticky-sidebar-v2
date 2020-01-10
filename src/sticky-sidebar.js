@@ -1,5 +1,5 @@
 /**
- * Sticky Sidebar JavaScript Plugin.
+ * Sticky Sidebar v2 JavaScript Plugin.
  * @version 1.0.0
  * @author Øystein Blixhavn <oystein@blixhavn.no>
  * @license The MIT License (MIT)
