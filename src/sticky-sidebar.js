@@ -50,12 +50,6 @@ const StickySidebar = (() => {
       stickyClass: 'is-affixed',
   
       /**
-       * Detect when sidebar and its container change height so re-calculate their dimensions.
-       * @type {Boolean}
-       */
-      resizeSensor: true,
-  
-      /**
        * The sidebar returns to its normal position if its width below this value.
        * @type {Numeric}
        */
@@ -206,9 +200,10 @@ const StickySidebar = (() => {
   
         this.sidebar.addEventListener('update' + EVENT_KEY, this);
   
-        if( this.options.resizeSensor && 'undefined' !== typeof ResizeSensor ){
-          new ResizeSensor(this.sidebarInner, this.handleEvent);
-          new ResizeSensor(this.container, this.handleEvent);
+        if( 'undefined' !== typeof ResizeObserver ){
+          const resizeObserver = new ResizeObserver(() => this.handleEvent())
+          resizeObserver.observe(this.sidebarInner)
+          resizeObserver.observe(this.container)
         }
       }
   
