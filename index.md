@@ -4,7 +4,7 @@ layout: default
 
 > Originally written by [Ahmed Bouhuolia](https://github.com/abouolia)
 
-[Sticky Sidebar v2](http://github.com/blixhavn/sticky-sidebar-v2) is a pure JavaScript plugin for making smart and high performance sticky sidebar, works with sidebar if it's taller or shorter than the viewport, integrated with [resize sensor](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) to re-calculate the dimensions automatically when the size of sidebar or its container is changed, supports jQuery/Zepto and compatible with Firefox, Chrome, Safari, and IE9+. Source can be found on [Github](http://github.com/blixhavn/sticky-sidebar-v2).
+[Sticky Sidebar v2](http://github.com/blixhavn/sticky-sidebar-v2) is a pure JavaScript plugin for making smart and high performance sticky sidebar, works with sidebar if it's taller or shorter than the viewport, supports jQuery/Zepto and compatible with Firefox, Chrome, Safari, and IE9+. Source can be found on [Github](http://github.com/blixhavn/sticky-sidebar-v2).
 
 <iframe src="https://ghbtns.com/github-btn.html?user=blixhavn&amp;repo=sticky-sidebar-v2&amp;type=watch&amp;count=true&amp;size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="170" height="30"></iframe>
@@ -26,7 +26,6 @@ layout: default
 ### Why sticky sidebar is awesome? 
 * It does not re-calculate all dimensions when scrolling, just neccessary dimensions.
 * Super smooth without incurring scroll lag or jank and no page reflows.
-* Integrated with resize sensor to re-calculate all dimensions of the plugin when the size of sidebar and its container is changed.
 * It has event trigger on each affix type to hook your code under particular situations.
 * Handle the sidebar when it is tall or too short compared to the rest of the container.
 * Zero dependencies and super simple to setup.
@@ -152,12 +151,6 @@ $('#sidebar').stickySidebar({
 
 Make sure to include ``jquery.sticky-sidebar.js`` script file after ``jquery.js``.
 
-### Usage with [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js)
-
-Integrate [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) into sticky sidebar to detect when sidebar or container is changed. To use resize sensor with this plugin just make sure to include [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) before `sticky-sidebar.js` code whether through module loader, bundle or event inclusion as a `<script>` and enable `resizeSensor` option (enabled by default) and it will work.
-
-If you choose not to include `ResizeSensor.js`, sticky sidebar will not have automatic resize detection and still continue to work without any problem.
-
 --------------------------
 
 ## Configure Your CSS
@@ -191,7 +184,6 @@ var stickySidebar = new StickySidebar('#sidebar', {
     containerSelector: false,
     innerWrapperSelector: '.sidebar__inner',
     scrollContainer: false',
-    resizeSensor: true,
     stickyClass: 'is-affixed',
     minWidth: 0
 });
@@ -238,16 +230,6 @@ If your content is inside a fixed-height element with a scrollbar, this element 
 var sidebar = new StickySidebar('.sidebar', {scrollContainer: '#main-viewport'});
 {% endhighlight javascript %}
 
-
-#### resizeSensor 
-
-If sticky sidebar has [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) integrated, when the size of sidebar or its container element is changed the plugin will re-calculate all dimensions. This option allows you to enable or disable resize sensor feature. ``Default: true``.
-
-Note: This option won't work even `ResizeSensor.js` is included into your page, more details in [Usage with ResizeSensor.js](#usage-with-resizesensorjs) section.
-
-{% highlight javascript %}
-var sidebar = new StickySidebar('.sidebar', {resizeSensor: true});
-{% endhighlight javasccript %}
 
 #### stickyClass
 
@@ -340,7 +322,7 @@ The biggest cause of scrolling jank is ``onScroll`` has a lot of work. But in th
 
 ## Browser Compatibility
 
-Sticky sidebar works in all modern browsers including Internet Explorer 9 and above, but if you want it to work with IE9, you should include [`requestAnimationFrame`](https://gist.github.com/paulirish/1579671) polyfill before sticky sidebar code.
+Sticky sidebar works in all modern browsers including Internet Explorer 9 and above, but if you want it to work with IE9, you should include [`requestAnimationFrame`](https://gist.github.com/paulirish/1579671) polyfill before sticky sidebar code. For backwards compatibility, a polyfill for [ResizeObserver](https://github.com/pelotoncycle/resize-observer) can also be included.
 
 If you have any issue with browser compatibility, don't hesitate to [Submit an issue](https://github.com/blixhavn/sticky-sidebar-v2/issues/new).
 
