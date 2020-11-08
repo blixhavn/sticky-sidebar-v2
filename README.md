@@ -19,7 +19,6 @@ For complete documentation and examples see [blixhavn.github.com/sticky-sidebar-
 
 * It does not re-calculate all dimensions when scrolling, just necessary dimensions.
 * Super smooth without incurring scroll lag or jank and no page reflows.
-* Integrated with resize sensor to re-calculate all dimenstions of the plugin when size of sidebar or its container is changed.
 * It has event trigger on each affix type to hook your code under particular situation.
 * Handle the sidebar when is tall or too short compared to the rest of the container.
 * Zero dependencies and super simple to setup.
