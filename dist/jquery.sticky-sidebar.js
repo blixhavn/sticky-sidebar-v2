@@ -692,19 +692,12 @@
 	});
 	});
 
-	var stickySidebar$1 = unwrapExports(stickySidebar);
-
-	var stickySidebar$2 = /*#__PURE__*/Object.freeze({
-		default: stickySidebar$1,
-		__moduleExports: stickySidebar
-	});
-
-	var require$$0 = ( stickySidebar$2 && stickySidebar$1 ) || stickySidebar$2;
+	unwrapExports(stickySidebar);
 
 	var jquery_stickySidebar = createCommonjsModule(function (module, exports) {
 	(function (global, factory) {
 	  {
-	    factory(require$$0);
+	    factory(stickySidebar);
 	  }
 	})(commonjsGlobal, function (_stickySidebar) {
 
