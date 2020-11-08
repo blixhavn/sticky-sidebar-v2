@@ -26,7 +26,6 @@ layout: default
 ### Why sticky sidebar is awesome? 
 * It does not re-calculate all dimensions when scrolling, just neccessary dimensions.
 * Super smooth without incurring scroll lag or jank and no page reflows.
-* Integrated with resize sensor to re-calculate all dimensions of the plugin when the size of sidebar and its container is changed.
 * It has event trigger on each affix type to hook your code under particular situations.
 * Handle the sidebar when it is tall or too short compared to the rest of the container.
 * Zero dependencies and super simple to setup.
@@ -152,10 +151,6 @@ $('#sidebar').stickySidebar({
 
 Make sure to include ``jquery.sticky-sidebar.js`` script file after ``jquery.js``.
 
-### Usage with ResizeObserver
-
-This library makes use of the relatively new feature ResizeObserver. While this is supported in all major browsers, its support is currently at [88.77% at caniuse.com](https://caniuse.com/resizeobserver). For full coverage in all browsers, a [Polyfill version](https://github.com/pelotoncycle/resize-observer) can be used.
-
 --------------------------
 
 ## Configure Your CSS
@@ -189,7 +184,6 @@ var stickySidebar = new StickySidebar('#sidebar', {
     containerSelector: false,
     innerWrapperSelector: '.sidebar__inner',
     scrollContainer: false',
-    resizeSensor: true,
     stickyClass: 'is-affixed',
     minWidth: 0
 });
@@ -236,16 +230,6 @@ If your content is inside a fixed-height element with a scrollbar, this element 
 var sidebar = new StickySidebar('.sidebar', {scrollContainer: '#main-viewport'});
 {% endhighlight javascript %}
 
-
-#### resizeSensor 
-
-If sticky sidebar has [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) integrated, when the size of sidebar or its container element is changed the plugin will re-calculate all dimensions. This option allows you to enable or disable resize sensor feature. ``Default: true``.
-
-Note: This option won't work even `ResizeSensor.js` is included into your page, more details in [Usage with ResizeSensor.js](#usage-with-resizesensorjs) section.
-
-{% highlight javascript %}
-var sidebar = new StickySidebar('.sidebar', {resizeSensor: true});
-{% endhighlight javasccript %}
 
 #### stickyClass
 
@@ -338,7 +322,7 @@ The biggest cause of scrolling jank is ``onScroll`` has a lot of work. But in th
 
 ## Browser Compatibility
 
-Sticky sidebar works in all modern browsers including Internet Explorer 9 and above, but if you want it to work with IE9, you should include [`requestAnimationFrame`](https://gist.github.com/paulirish/1579671) polyfill before sticky sidebar code.
+Sticky sidebar works in all modern browsers including Internet Explorer 9 and above, but if you want it to work with IE9, you should include [`requestAnimationFrame`](https://gist.github.com/paulirish/1579671) polyfill before sticky sidebar code. For backwards compatibility, a polyfill for [ResizeObserver](https://github.com/pelotoncycle/resize-observer) can also be included.
 
 If you have any issue with browser compatibility, don't hesitate to [Submit an issue](https://github.com/blixhavn/sticky-sidebar-v2/issues/new).
 
