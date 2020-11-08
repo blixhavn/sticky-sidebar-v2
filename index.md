@@ -4,7 +4,7 @@ layout: default
 
 > Originally written by [Ahmed Bouhuolia](https://github.com/abouolia)
 
-[Sticky Sidebar v2](http://github.com/blixhavn/sticky-sidebar-v2) is a pure JavaScript plugin for making smart and high performance sticky sidebar, works with sidebar if it's taller or shorter than the viewport, integrated with [resize sensor](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) to re-calculate the dimensions automatically when the size of sidebar or its container is changed, supports jQuery/Zepto and compatible with Firefox, Chrome, Safari, and IE9+. Source can be found on [Github](http://github.com/blixhavn/sticky-sidebar-v2).
+[Sticky Sidebar v2](http://github.com/blixhavn/sticky-sidebar-v2) is a pure JavaScript plugin for making smart and high performance sticky sidebar, works with sidebar if it's taller or shorter than the viewport, supports jQuery/Zepto and compatible with Firefox, Chrome, Safari, and IE9+. Source can be found on [Github](http://github.com/blixhavn/sticky-sidebar-v2).
 
 <iframe src="https://ghbtns.com/github-btn.html?user=blixhavn&amp;repo=sticky-sidebar-v2&amp;type=watch&amp;count=true&amp;size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="170" height="30"></iframe>
@@ -152,11 +152,9 @@ $('#sidebar').stickySidebar({
 
 Make sure to include ``jquery.sticky-sidebar.js`` script file after ``jquery.js``.
 
-### Usage with [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js)
+### Usage with ResizeObserver
 
-Integrate [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) into sticky sidebar to detect when sidebar or container is changed. To use resize sensor with this plugin just make sure to include [ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js) before `sticky-sidebar.js` code whether through module loader, bundle or event inclusion as a `<script>` and enable `resizeSensor` option (enabled by default) and it will work.
-
-If you choose not to include `ResizeSensor.js`, sticky sidebar will not have automatic resize detection and still continue to work without any problem.
+This library makes use of the relatively new feature ResizeObserver. While this is supported in all major browsers, its support is currently at [88.77% at caniuse.com](https://caniuse.com/resizeobserver). For full coverage in all browsers, a [Polyfill version](https://github.com/pelotoncycle/resize-observer) can be used.
 
 --------------------------
 
