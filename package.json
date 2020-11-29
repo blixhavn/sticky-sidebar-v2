@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "mocha --compilers js:babel-core/register"
+    "test": "mocha --compilers js:babel-core/register",
   },
   "repository": {
     "type": "git",
