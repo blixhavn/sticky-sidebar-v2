@@ -178,7 +178,7 @@
 	      }
 
 	      /**
-	       * Initializes the sticky sidebar by adding inner wrapper, define its container, 
+	       * Initializes the sticky sidebar by adding inner wrapper, define its container,
 	       * min-width breakpoint, calculating dimensions, adding helper classes and inline style.
 	       * @private
 	       */
@@ -335,9 +335,7 @@
 	      }, {
 	        key: 'isSidebarFitsViewport',
 	        value: function isSidebarFitsViewport() {
-	          var dims = this.dimensions;
-	          var offset = this.scrollDirection === 'down' ? dims.lastBottomSpacing : dims.lastTopSpacing;
-	          return this.dimensions.sidebarHeight + offset < this.dimensions.viewportHeight;
+	          return this.dimensions.viewportHeight >= this.dimensions.lastBottomSpacing + this.dimensions.lastTopSpacing + this.dimensions.sidebarHeight;
 	        }
 	      }, {
 	        key: 'observeScrollDir',
@@ -534,7 +532,7 @@
 	            requestAnimationFrame(function () {
 	              switch (eventType) {
 	                // When browser is scrolling and re-calculate just dimensions
-	                // within scroll. 
+	                // within scroll.
 	                case 'scroll':
 	                  _this4._calcDimensionsWithScroll();
 	                  _this4.observeScrollDir();
