@@ -310,6 +310,7 @@
 		        key: '_calcDimensionsWithScroll',
 		        value: function _calcDimensionsWithScroll() {
 		          var dims = this.dimensions;
+		          var lastViewportLeft = dims.viewportLeft;
 
 		          dims.sidebarLeft = StickySidebar.offsetRelative(this.sidebar).left;
 
@@ -334,11 +335,15 @@
 		            if (dims.topSpacing < dims.lastTopSpacing) {
 		              dims.translateY += dims.lastTopSpacing - dims.topSpacing;
 		              this._reStyle = true;
+		            } else if (lastViewportLeft !== dims.viewportLeft) {
+		              this._reStyle = true;
 		            }
 		          } else if ('VIEWPORT-BOTTOM' === this.affixedType) {
 		            // Adjust translate Y in the case decrease bottom spacing value.
 		            if (dims.bottomSpacing < dims.lastBottomSpacing) {
 		              dims.translateY += dims.lastBottomSpacing - dims.bottomSpacing;
+		              this._reStyle = true;
+		            } else if (lastViewportLeft !== dims.viewportLeft) {
 		              this._reStyle = true;
 		            }
 		          }
@@ -454,7 +459,7 @@
 		                left: dims.sidebarLeft - dims.viewportLeft, width: dims.sidebarWidth };
 		              break;
 		            case 'VIEWPORT-BOTTOM':
-		              style.inner = { position: 'fixed', top: 'auto', left: dims.sidebarLeft,
+		              style.inner = { position: 'fixed', top: 'auto', left: dims.sidebarLeft - dims.viewportLeft,
 		                bottom: dims.bottomSpacing, width: dims.sidebarWidth };
 		              break;
 		            case 'CONTAINER-BOTTOM':
@@ -486,6 +491,7 @@
 		          if (this._breakpoint) return;
 
 		          force = this._reStyle || force || false;
+		          this._reStyle = false;
 
 		          this.options.topSpacing;
 		          this.options.bottomSpacing;
