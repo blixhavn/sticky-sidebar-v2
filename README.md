@@ -12,7 +12,7 @@ As the original project is currently inactive, this fork is an attempt to revive
 
 [Scrollable Sticky Element](https://blixhavn.github.io/sticky-sidebar-v2/examples/scrollable-element.html)
 
-For complete documentation and examples see [blixhavn.github.com/sticky-sidebar-v2](https://blixhavn.github.io/sticky-sidebar-v2/)
+For complete documentation and examples see [blixhavn.github.io/sticky-sidebar-v2](http://blixhavn.github.io/sticky-sidebar-v2)
 
 
 ## Why is sticky sidebar so awesome?
