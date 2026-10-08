@@ -7,23 +7,22 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
-
-      # Trusted publishing needs npm 11.5.1 or newer.
-      - run: npm install -g npm@11
+          cache: npm
 
       - name: Check that the release tag matches the package version
         run: |
@@ -42,5 +41,33 @@ jobs:
 
       - run: npm test
 
+      - run: mkdir package && npm pack --pack-destination package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: package/*.tgz
+          if-no-files-found: error
+
+  # Kept separate so the dev dependencies' install scripts never run in a job that
+  # can mint an npm publish token.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or newer.
+      - run: npm install -g npm@11
+
       # GitHub pre-releases go to the "next" dist-tag so they are not installed by default.
-      - run: npm publish --tag "${{ github.event.release.prerelease && 'next' || 'latest' }}"
+      - run: npm publish ./*.tgz --tag "${{ github.event.release.prerelease && 'next' || 'latest' }}"
