@@ -837,6 +837,28 @@ describe('StickySidebar', () => {
     });
   });
 
+  describe('stretched sidebar', () => {
+
+    ['display: flex;', 'display: grid; grid-template-columns: 200px 1fr;'].forEach((containerStyle) => {
+      it('Should stick when the container is `' + containerStyle + '`', (done) => {
+        fixture.innerHTML = '<div class="container" style="' + containerStyle + '">' +
+        '  <div class="sidebar" style="float: none; flex: none;"><span>Lorem Ipsum</span></div>' +
+        '  <div class="content" style="margin-left: 0; flex: 1;"><span>Lorem Ipsum</span></div>' +
+        '</div>';
+
+        const stickySidebar = new StickySidebar('.sidebar', {containerSelector: '.container'});
+
+        window.addEventListener('scroll', () => {
+          mockRaf.step();
+          assert.equal(stickySidebar.affixedType, 'VIEWPORT-TOP');
+          done();
+        }, {once: true});
+
+        window.scrollTo(0, 300);
+      });
+    });
+  });
+
   describe('widthBreakpoint', () => {
 
     it('Should stickness be broken if options.minWidth bigger than viewport width.', () => {
