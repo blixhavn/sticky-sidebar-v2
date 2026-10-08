@@ -4,4 +4,3 @@ docs/_site
 docs/.sass-cache
 yarn.lock
 
-/dist/
