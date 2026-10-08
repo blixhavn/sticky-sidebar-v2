@@ -1,13 +1,12 @@
 const gulp = require("gulp");
-const sourcemaps = require("gulp-sourcemaps");
 const babel = require("gulp-babel");
 const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
 const header = require('gulp-header');
-const gutil = require('gulp-util');
-const gru2 = require('gulp-rollup-2');
-const resolve =  require('rollup-plugin-node-resolve');
+const { rollup } = require('rollup');
+const resolve = require('rollup-plugin-node-resolve');
 const commonjs = require('rollup-plugin-commonjs');
+const fs = require('fs');
 const pkg = require('./package.json');
 
 const banner = [
@@ -21,56 +20,58 @@ const banner = [
   '',
 ].join('\n');
 
-gulp.task("babel", function(){
+// Each step reads from a different directory than it writes to. Reading inputs from
+// dist/ while the same build wrote to it made the output depend on timing.
+
+function clean(){
+  return Promise.all(['build', 'dist'].map((dir) => fs.promises.rm(dir, {recursive: true, force: true})));
+}
+
+function compile(){
   return gulp.src("src/*.js")
     .pipe(babel())
+    .pipe(gulp.dest("build"));
+}
+
+function core(){
+  return gulp.src("build/sticky-sidebar.js")
     .pipe(gulp.dest("dist"));
-});
+}
 
-gulp.task('bundle', gulp.series('babel', function(){
-  return gulp.src(["dist/sticky-sidebar.js", "dist/jquery.sticky-sidebar.js"])
-    .pipe(sourcemaps.write('.'))
-    // transform the files here.
-    .pipe(gru2.rollup({
-      input: './dist/sticky-sidebar.js',
-      external: ['window'],
-      plugins: [ resolve(), commonjs() ],
-      output: [
-          {
-              file: 'sticky-sidebar.js',
-              name: 'StickySidebar',
-              format: 'umd',
-              globals: {window: 'window'}
-          }
-      ]
-    }))
-    .pipe(gru2.rollup({
-        input: './dist/jquery.sticky-sidebar.js',
-        external: ['window'],
-        plugins: [ resolve(), commonjs() ],
-        output: [
-            {
-                file: 'jquery.sticky-sidebar.js',
-                format: 'umd',
-                globals: {window: 'window'}
-            }
-        ]
-    }))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest('./dist'));
-}));
+// The plugin only registers itself on jQuery. Importing it from a side-effect-only
+// entry keeps the bundle from exporting anything, so it defines no global of its own.
+const jQueryEntry = {
+  name: 'jquery-entry',
+  resolveId: (id) => 'jquery-entry' === id ? id : null,
+  load: (id) => 'jquery-entry' === id ? "import './build/jquery.sticky-sidebar.js';" : null
+};
 
-gulp.task('uglify', gulp.series('bundle', function(){
+async function bundleJQuery(){
+  const bundle = await rollup({
+    input: 'jquery-entry',
+    external: ['window'],
+    plugins: [ jQueryEntry, resolve(), commonjs() ]
+  });
+
+  await bundle.write({
+    file: 'dist/jquery.sticky-sidebar.js',
+    format: 'umd',
+    globals: {window: 'window'}
+  });
+}
+
+function minify(){
   return gulp.src(["dist/sticky-sidebar.js", "dist/jquery.sticky-sidebar.js"])
     .pipe(uglify())
-    .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
     .pipe(header(banner, {pkg}))
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest("dist/"));
-}));
+    .pipe(gulp.dest("dist"));
+}
+
+const build = gulp.series(clean, compile, gulp.parallel(core, bundleJQuery), minify);
 
 gulp.task('watch', function() {
-  gulp.watch('src/*.js', ['default']);
+  gulp.watch('src/*.js', build);
 });
 
-gulp.task('default', gulp.series(['babel', 'bundle', 'uglify']));
+gulp.task('default', build);
