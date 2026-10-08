@@ -148,7 +148,7 @@
 
 		        // Sidebar element query if there's no one, throw error.
 		        this.sidebar = 'string' === typeof sidebar ? document.querySelector(sidebar) : sidebar;
-		        if ('undefined' === typeof this.sidebar) throw new Error("There is no specific sidebar element.");
+		        if (!this.sidebar) throw new Error("There is no specific sidebar element.");
 
 		        this.sidebarInner = false;
 		        this.container = this.sidebar.parentElement;
@@ -174,6 +174,7 @@
 		          bottomSpacing: 0,
 		          lastBottomSpacing: 0,
 		          sidebarHeight: 0,
+		          sidebarOuterHeight: 0,
 		          sidebarWidth: 0,
 		          containerTop: 0,
 		          containerHeight: 0,
@@ -265,17 +266,19 @@
 
 		          this.eventTarget = this.scrollContainer ? this.scrollContainer : window;
 
-		          this.eventTarget.addEventListener('resize', this, { passive: true, capture: false });
-		          this.eventTarget.addEventListener('scroll', this, { passive: true, capture: false });
+		          // Listen with the bound function rather than `this`, so destroy() can remove the
+		          // listeners even when called through a proxy of the instance (e.g. Vue 3 reactivity).
+		          this.eventTarget.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
+		          this.eventTarget.addEventListener('scroll', this.handleEvent, { passive: true, capture: false });
 
-		          this.sidebar.addEventListener('update' + EVENT_KEY, this);
+		          this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
 
 		          if ('undefined' !== typeof ResizeObserver) {
-		            var resizeObserver = new ResizeObserver(function () {
+		            this.resizeObserver = new ResizeObserver(function () {
 		              return _this3.handleEvent();
 		            });
-		            resizeObserver.observe(this.sidebarInner);
-		            resizeObserver.observe(this.container);
+		            this.resizeObserver.observe(this.sidebarInner);
+		            this.resizeObserver.observe(this.container);
 		          }
 		        }
 		      }, {
@@ -297,6 +300,11 @@
 		          // Sidebar dimensions.
 		          dims.sidebarHeight = this.sidebarInner.offsetHeight;
 		          dims.sidebarWidth = this.sidebarInner.offsetWidth;
+
+		          // Height the sidebar takes up in the container, including its own padding and
+		          // margins collapsing out of the inner wrapper. Only measurable while static,
+		          // since affixing pins the sidebar to the inner wrapper's height.
+		          if ('STATIC' === this.affixedType) dims.sidebarOuterHeight = this.sidebar.offsetHeight;
 
 		          // Screen viewport dimensions.
 		          dims.viewportHeight = window.innerHeight;
@@ -375,7 +383,7 @@
 		          var colliderTop = dims.viewportTop + dims.topSpacing;
 		          var affixType = this.affixedType;
 
-		          if (colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarHeight) {
+		          if (colliderTop <= dims.containerTop || dims.containerHeight <= Math.max(dims.sidebarHeight, dims.sidebarOuterHeight)) {
 		            dims.translateY = 0;
 		            affixType = 'STATIC';
 		          } else {
@@ -549,7 +557,7 @@
 		          this._running = true;
 
 		          (function (eventType) {
-		            requestAnimationFrame(function () {
+		            _this4._animationFrame = requestAnimationFrame(function () {
 		              switch (eventType) {
 		                // When browser is scrolling and re-calculate just dimensions
 		                // within scroll.
@@ -592,13 +600,23 @@
 		      }, {
 		        key: 'destroy',
 		        value: function destroy() {
-		          window.removeEventListener('resize', this, { capture: false });
-		          window.removeEventListener('scroll', this, { capture: false });
+		          this.eventTarget.removeEventListener('resize', this.handleEvent, { capture: false });
+		          this.eventTarget.removeEventListener('scroll', this.handleEvent, { capture: false });
+
+		          this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
+
+		          if (this.resizeObserver) {
+		            this.resizeObserver.disconnect();
+		            this.resizeObserver = null;
+		          }
+
+		          if (this._running) {
+		            cancelAnimationFrame(this._animationFrame);
+		            this._running = false;
+		          }
 
 		          this.sidebar.classList.remove(this.options.stickyClass);
 		          this.sidebar.style.minHeight = '';
-
-		          this.sidebar.removeEventListener('update' + EVENT_KEY, this);
 
 		          var styleReset = { inner: {}, outer: {} };
 
@@ -609,9 +627,6 @@
 		            this.sidebar.style[key] = styleReset.outer[key];
 		          }for (var _key2 in styleReset.inner) {
 		            this.sidebarInner.style[_key2] = styleReset.inner[_key2];
-		          }if (this.options.resizeSensor && 'undefined' !== typeof ResizeSensor) {
-		            ResizeSensor.detach(this.sidebarInner, this.handleEvent);
-		            ResizeSensor.detach(this.container, this.handleEvent);
 		          }
 		        }
 		      }], [{
@@ -706,7 +721,7 @@
 
 		  // Global
 		  // -------------------------
-		  window.StickySidebar = StickySidebar;
+		  if ('undefined' !== typeof window) window.StickySidebar = StickySidebar;
 		});
 		});
 
