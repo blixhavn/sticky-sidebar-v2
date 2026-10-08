@@ -58,8 +58,17 @@
     <script>
         mocha.setup({globals: ['hasCert']})
         mocha.checkLeaks();
-        mocha.globals(['jQuery']);
-        mocha.run();
+        // Puppeteer (test/run.js) injects its query handlers as globals.
+        mocha.globals(['jQuery', '__ariaQuerySelector*', 'puppeteer_*']);
+
+        var runner = mocha.run();
+        var failures = [];
+        runner.on('fail', function(test, error){
+          failures.push({title: test.fullTitle(), error: String(error && error.message)});
+        });
+        runner.on('end', function(){
+          window.mochaResults = {stats: runner.stats, failures: failures};
+        });
     </script>
 </body>
 </html>
