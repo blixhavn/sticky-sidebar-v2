@@ -12,10 +12,12 @@ describe('StickySidebar', () => {
   before(() => {
     var stub = sinon.stub(window, 'requestAnimationFrame');
     stub.callsFake(mockRaf.raf);
+    sinon.stub(window, 'cancelAnimationFrame').callsFake(mockRaf.cancel);
   })
 
   after(() => {
     window.requestAnimationFrame.restore();
+    window.cancelAnimationFrame.restore();
   });
 
   afterEach(() => {
@@ -826,6 +828,73 @@ describe('StickySidebar', () => {
       assert.isNotTrue(stickySidebar.sidebar.classList.contains(stickySidebar.options.stickyClass));
       assert.isNull(stickySidebar.sidebar.getAttribute('style'));
       assert.isNull(stickySidebar.sidebarInner.getAttribute('style'));
+    });
+
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    it('Should not re-affix the sidebar when the container resizes after destroy.', () => {
+      fixture.innerHTML = '<div class="container">' +
+      '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
+      '  <div class="content"><span>Lorem Ipsum</span></div>' +
+      '</div>';
+
+      const stickySidebar = new StickySidebar('.sidebar', {containerSelector: '.container'});
+      window.scrollTo(0, 500);
+      stickySidebar.destroy();
+
+      document.querySelector('.content').style.height = '2500px';
+
+      return wait(50).then(() => {
+        mockRaf.step();
+        assert.isNotTrue(stickySidebar.sidebar.classList.contains(stickySidebar.options.stickyClass));
+        assert.equal(stickySidebar.sidebarInner.style.position, '');
+      });
+    });
+
+    it('Should cancel a pending update when destroyed.', () => {
+      fixture.innerHTML = '<div class="container">' +
+      '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
+      '  <div class="content"><span>Lorem Ipsum</span></div>' +
+      '</div>';
+
+      const stickySidebar = new StickySidebar('.sidebar', {containerSelector: '.container'});
+      window.scrollTo(0, 500);
+      stickySidebar.updateSticky();
+      stickySidebar.destroy();
+      mockRaf.step();
+
+      assert.isNotTrue(stickySidebar.sidebar.classList.contains(stickySidebar.options.stickyClass));
+    });
+
+    it('Should remove listeners from the scroll container.', () => {
+      fixture.innerHTML = '<div id="scroll-container" style="height: 400px; overflow: auto;">' +
+      '<div class="container">' +
+      '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
+      '  <div class="content"><span>Lorem Ipsum</span></div>' +
+      '</div></div>';
+
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container', scrollContainer: '#scroll-container'
+      });
+      const updateSticky = sinon.spy(stickySidebar, 'updateSticky');
+      stickySidebar.destroy();
+
+      document.getElementById('scroll-container').dispatchEvent(new Event('scroll'));
+      assert.isTrue(updateSticky.notCalled);
+    });
+
+    it('Should remove listeners when destroyed through a proxy of the instance.', () => {
+      fixture.innerHTML = '<div class="container">' +
+      '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
+      '  <div class="content"><span>Lorem Ipsum</span></div>' +
+      '</div>';
+
+      const stickySidebar = new StickySidebar('.sidebar', {containerSelector: '.container'});
+      const updateSticky = sinon.spy(stickySidebar, 'updateSticky');
+      new Proxy(stickySidebar, {}).destroy();
+
+      window.dispatchEvent(new Event('scroll'));
+      assert.isTrue(updateSticky.notCalled);
     });
   });
 
