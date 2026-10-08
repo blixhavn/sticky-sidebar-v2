@@ -35,6 +35,10 @@ describe('StickySidebar', () => {
       assert.throws(() => { new StickySidebar() }, 'There is no specific sidebar element.');
     })
 
+    it('Should throw explicit error when the sidebar selector matches no element.', () => {
+      assert.throws(() => { new StickySidebar('.does-not-exist') }, 'There is no specific sidebar element.');
+    })
+
     it('should all default configuration options has the right value.', () => {
       fixture.innerHTML = '<div class="container">' +
       '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
