@@ -793,6 +793,50 @@ describe('StickySidebar', () => {
     })
   })
 
+  describe('sidebar taller than content', () => {
+
+    const countAffixChanges = (sidebarHtml, sidebarStyle) => {
+      fixture.innerHTML = '<div class="container">' +
+      '  <div class="sidebar" style="' + sidebarStyle + '">' + sidebarHtml + '</div>' +
+      '  <div class="content" style="height: 200px;"><span>Lorem Ipsum</span></div>' +
+      '</div>';
+
+      const stickySidebar = new StickySidebar('.sidebar', {containerSelector: '.container'});
+      let changes = 0;
+      ['static', 'top', 'bottom', 'unbottom', 'container-bottom'].forEach((type) => {
+        stickySidebar.sidebar.addEventListener('affixed.' + type + '.stickySidebar', () => changes++);
+      });
+
+      window.scrollTo(0, 150);
+      window.dispatchEvent(new Event('scroll'));
+
+      let chain = Promise.resolve();
+      for( let i = 0; i < 10; i++ )
+        chain = chain.then(() => new Promise((resolve) => setTimeout(resolve, 20))).then(() => mockRaf.step());
+
+      return chain.then(() => ({changes, affixedType: stickySidebar.affixedType}));
+    };
+
+    it('Should stay static when a child of the inner wrapper has margin-bottom.', () => {
+      return countAffixChanges(
+        '<div class="inner-wrapper-sticky" style="height: auto;"><p style="height: 400px; margin: 0 0 20px;">Lorem Ipsum</p></div>', ''
+      ).then(({changes, affixedType}) => {
+        assert.equal(affixedType, 'STATIC');
+        assert.equal(changes, 0);
+      });
+    });
+
+    it('Should stay static when the sidebar has padding and border-box sizing.', () => {
+      return countAffixChanges(
+        '<div class="inner-wrapper-sticky" style="height: 400px;"><span>Lorem Ipsum</span></div>',
+        'box-sizing: border-box; padding-bottom: 20px;'
+      ).then(({changes, affixedType}) => {
+        assert.equal(affixedType, 'STATIC');
+        assert.equal(changes, 0);
+      });
+    });
+  });
+
   describe('widthBreakpoint', () => {
 
     it('Should stickness be broken if options.minWidth bigger than viewport width.', () => {

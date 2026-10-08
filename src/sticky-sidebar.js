@@ -104,6 +104,7 @@ const StickySidebar = (() => {
           bottomSpacing: 0,
           lastBottomSpacing: 0,
           sidebarHeight: 0,
+          sidebarOuterHeight: 0,
           sidebarWidth: 0,
           containerTop: 0,
           containerHeight: 0,
@@ -234,6 +235,12 @@ const StickySidebar = (() => {
         dims.sidebarHeight = this.sidebarInner.offsetHeight;
         dims.sidebarWidth  = this.sidebarInner.offsetWidth;
 
+        // Height the sidebar takes up in the container, including its own padding and
+        // margins collapsing out of the inner wrapper. Only measurable while static,
+        // since affixing pins the sidebar to the inner wrapper's height.
+        if( 'STATIC' === this.affixedType )
+          dims.sidebarOuterHeight = this.sidebar.offsetHeight;
+
         // Screen viewport dimensions.
         dims.viewportHeight = window.innerHeight;
 
@@ -333,7 +340,8 @@ const StickySidebar = (() => {
         var colliderTop = dims.viewportTop + dims.topSpacing;
         var affixType = this.affixedType;
 
-       if( colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarHeight ){
+       if( colliderTop <= dims.containerTop ||
+           dims.containerHeight <= Math.max(dims.sidebarHeight, dims.sidebarOuterHeight) ){
           dims.translateY = 0;
           affixType = 'STATIC';
         } else {
