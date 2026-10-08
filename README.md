@@ -1,4 +1,4 @@
-# Sticky Sidebar v2 [![Build Status](https://travis-ci.org/blixhavn/sticky-sidebar-v2.svg?branch=master)](https://travis-ci.org/blixhavn/sticky-sidebar-v2)
+# Sticky Sidebar v2 [![CI](https://github.com/blixhavn/sticky-sidebar-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/blixhavn/sticky-sidebar-v2/actions/workflows/ci.yml)
 
 Pure JavaScript plugin for making smart and high performance sticky sidebars, originally written by [Ahmed Bouhuolia](https://github.com/abouolia).
 
@@ -25,7 +25,7 @@ For complete documentation and examples see [blixhavn.github.io/sticky-sidebar-v
 
 ## Install
 
-You can download sticky sidebar v2 vjQuery plugin from Yarn, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
+You can download sticky sidebar v2 from Yarn, NPM or just simply download it from this page and link to the ``sticky-sidebar.js`` file in your project folder.
 
 #### Yarn
 
@@ -96,7 +96,52 @@ You can configure sticky sidebar as a jQuery plugin, just include ``jquery.stick
 </script>
 ````
 
-Make sure to include ``sticky-sidebar.js`` script file after ``jquery.js``.
+Make sure to include ``jquery.sticky-sidebar.js`` script file after ``jquery.js``.
+
+#### Via a bundler
+
+When installed from NPM, import the class:
+
+````js
+import StickySidebar from 'sticky-sidebar-v2';
+
+const sidebar = new StickySidebar('.sidebar', {
+  containerSelector: '.main-content',
+  innerWrapperSelector: '.sidebar__inner'
+});
+````
+
+With CommonJS, the class is the ``default`` export: ``require('sticky-sidebar-v2').default``.
+
+The jQuery plugin looks for ``window.jQuery`` when it loads, so it is meant for ``<script>`` tags. With a bundler, use the class directly.
+
+The module can be imported during server-side rendering (Nuxt, Next.js and similar), but only create the instance in the browser, for example in ``onMounted`` or ``useEffect``.
+
+## Methods
+
+``updateSticky()`` - Recalculates the cached dimensions and repositions the sidebar. Size changes of the sidebar and its container, and window resizes, are picked up automatically. Call this when the layout changes in other ways, for example when content inserted above the container moves it down.
+
+``destroy()`` - Removes inline styles, the sticky class and all event listeners.
+
+````js
+sidebar.updateSticky();
+sidebar.destroy();
+````
+
+With jQuery, pass the method name: ``$('.sidebar').stickySidebar('destroy')``.
+
+#### Dynamic pages
+
+If the sidebar or container element is replaced, for example on client-side navigation, destroy the old instance and create a new one for the new elements:
+
+````js
+import { onMounted, onBeforeUnmount } from 'vue';
+import StickySidebar from 'sticky-sidebar-v2';
+
+let sidebar;
+onMounted(() => { sidebar = new StickySidebar('.sidebar', { containerSelector: '.main-content' }); });
+onBeforeUnmount(() => sidebar.destroy());
+````
 
 ## Browser Support
 
