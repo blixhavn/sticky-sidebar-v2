@@ -42,4 +42,5 @@ jobs:
 
       - run: npm test
 
-      - run: npm publish
+      # GitHub pre-releases go to the "next" dist-tag so they are not installed by default.
+      - run: npm publish --tag "${{ github.event.release.prerelease && 'next' || 'latest' }}"
