@@ -568,6 +568,7 @@ const StickySidebar = (() => {
               default:
                 this._widthBreakpoint();
                 this.calcDimensions();
+                this.observeScrollDir();
                 this.stickyPosition(true);
                 break;
             }

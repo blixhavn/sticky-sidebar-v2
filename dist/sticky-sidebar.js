@@ -552,6 +552,7 @@
                 default:
                   _this4._widthBreakpoint();
                   _this4.calcDimensions();
+                  _this4.observeScrollDir();
                   _this4.stickyPosition(true);
                   break;
               }
