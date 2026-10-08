@@ -268,7 +268,7 @@
 
 		          // Listen with the bound function rather than `this`, so destroy() can remove the
 		          // listeners even when called through a proxy of the instance (e.g. Vue 3 reactivity).
-		          this.eventTarget.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
+		          window.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
 		          this.eventTarget.addEventListener('scroll', this.handleEvent, { passive: true, capture: false });
 
 		          this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
@@ -627,7 +627,7 @@
 		      }, {
 		        key: 'destroy',
 		        value: function destroy() {
-		          this.eventTarget.removeEventListener('resize', this.handleEvent, { capture: false });
+		          window.removeEventListener('resize', this.handleEvent, { capture: false });
 		          this.eventTarget.removeEventListener('scroll', this.handleEvent, { capture: false });
 
 		          this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
@@ -791,6 +791,9 @@
 		            if (data[config] === undefined && ['destroy', 'updateSticky'].indexOf(config) === -1) throw new Error('No method named "' + config + '"');
 
 		            data[config]();
+
+		            // Forget the destroyed instance so the plugin can be initialized again.
+		            if ('destroy' === config) $this.removeData(DATA_NAMESPACE);
 		          }
 		        });
 		      };

@@ -27,6 +27,10 @@ import StickySidebar from './sticky-sidebar';
               throw new Error('No method named "'+ config +'"');
 
             data[config]();
+
+            // Forget the destroyed instance so the plugin can be initialized again.
+            if( 'destroy' === config )
+              $this.removeData(DATA_NAMESPACE);
           }
       });
     }

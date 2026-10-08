@@ -837,6 +837,26 @@ describe('StickySidebar', () => {
     });
   });
 
+  describe('bindEvents', () => {
+
+    it('Should update on window resize when using a scroll container.', () => {
+      fixture.innerHTML = '<div id="scroll-container" style="height: 400px; overflow: auto;">' +
+      '<div class="container">' +
+      '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
+      '  <div class="content"><span>Lorem Ipsum</span></div>' +
+      '</div></div>';
+
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container', scrollContainer: '#scroll-container'
+      });
+      const updateSticky = sinon.spy(stickySidebar, 'updateSticky');
+
+      window.dispatchEvent(new Event('resize'));
+      stickySidebar.destroy();
+      assert.isTrue(updateSticky.calledOnce);
+    });
+  });
+
   describe('stretched sidebar', () => {
 
     ['display: flex;', 'display: grid; grid-template-columns: 200px 1fr;'].forEach((containerStyle) => {
@@ -976,6 +996,20 @@ describe('StickySidebar', () => {
       const $stickySidebar = $sidebar.stickySidebar();
       assert.isTrue($stickySidebar instanceof $);
       assert.equal($sidebar[0], $stickySidebar[0])
+    });
+
+    it('should create a new instance when initialized again after destroy', () => {
+      fixture.innerHTML = '<div class="container">' +
+      '  <div class="sidebar"><span>Lorem Ipsum</span></div>' +
+      '  <div class="content"><span>Lorem Ipsum</span></div>' +
+      '</div>';
+
+      const $sidebar = $('.sidebar').stickySidebar();
+      const destroyed = $sidebar.data('stickySidebar');
+      $sidebar.stickySidebar('destroy');
+      $sidebar.stickySidebar();
+
+      assert.notStrictEqual($sidebar.data('stickySidebar'), destroyed);
     });
 
     it('should throw explicit error on undefined method', () => {
