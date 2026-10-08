@@ -195,15 +195,17 @@ const StickySidebar = (() => {
       bindEvents(){
         this.eventTarget = this.scrollContainer ? this.scrollContainer : window;
 
-        this.eventTarget.addEventListener('resize', this, { passive: true, capture: false });
-        this.eventTarget.addEventListener('scroll', this, { passive: true, capture: false });
+        // Listen with the bound function rather than `this`, so destroy() can remove the
+        // listeners even when called through a proxy of the instance (e.g. Vue 3 reactivity).
+        this.eventTarget.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
+        this.eventTarget.addEventListener('scroll', this.handleEvent, { passive: true, capture: false });
 
-        this.sidebar.addEventListener('update' + EVENT_KEY, this);
+        this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
 
         if( 'undefined' !== typeof ResizeObserver ){
-          const resizeObserver = new ResizeObserver(() => this.handleEvent())
-          resizeObserver.observe(this.sidebarInner)
-          resizeObserver.observe(this.container)
+          this.resizeObserver = new ResizeObserver(() => this.handleEvent());
+          this.resizeObserver.observe(this.sidebarInner);
+          this.resizeObserver.observe(this.container);
         }
       }
 
@@ -542,7 +544,7 @@ const StickySidebar = (() => {
         this._running = true;
 
         ((eventType) => {
-          requestAnimationFrame(() => {
+          this._animationFrame = requestAnimationFrame(() => {
             switch( eventType ){
               // When browser is scrolling and re-calculate just dimensions
               // within scroll.
@@ -596,13 +598,23 @@ const StickySidebar = (() => {
        * @public
        */
       destroy(){
-        window.removeEventListener('resize', this, {capture: false});
-        window.removeEventListener('scroll', this, {capture: false});
+        this.eventTarget.removeEventListener('resize', this.handleEvent, {capture: false});
+        this.eventTarget.removeEventListener('scroll', this.handleEvent, {capture: false});
+
+        this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
+
+        if( this.resizeObserver ){
+          this.resizeObserver.disconnect();
+          this.resizeObserver = null;
+        }
+
+        if( this._running ){
+          cancelAnimationFrame(this._animationFrame);
+          this._running = false;
+        }
 
         this.sidebar.classList.remove(this.options.stickyClass);
         this.sidebar.style.minHeight = '';
-
-        this.sidebar.removeEventListener('update' + EVENT_KEY, this);
 
         var styleReset = {inner: {}, outer: {}};
 
@@ -614,11 +626,6 @@ const StickySidebar = (() => {
 
         for( let key in styleReset.inner )
           this.sidebarInner.style[key] = styleReset.inner[key];
-
-        if( this.options.resizeSensor && 'undefined' !== typeof ResizeSensor ){
-          ResizeSensor.detach(this.sidebarInner, this.handleEvent);
-          ResizeSensor.detach(this.container, this.handleEvent);
-        }
       }
 
       /**
