@@ -235,11 +235,10 @@ const StickySidebar = (() => {
         dims.sidebarHeight = this.sidebarInner.offsetHeight;
         dims.sidebarWidth  = this.sidebarInner.offsetWidth;
 
-        // Height the sidebar takes up in the container, including its own padding and
-        // margins collapsing out of the inner wrapper. Only measurable while static,
-        // since affixing pins the sidebar to the inner wrapper's height.
-        if( 'STATIC' === this.affixedType )
-          dims.sidebarOuterHeight = this.sidebar.offsetHeight;
+        // Height the sidebar's content needs in the container. Measured from the inner
+        // wrapper rather than the sidebar itself, which may be stretched to the container
+        // height (flex/grid) or pinned to the inner wrapper's height while affixed.
+        dims.sidebarOuterHeight = dims.sidebarHeight + this._getSidebarExtraHeight();
 
         // Screen viewport dimensions.
         dims.viewportHeight = window.innerHeight;
@@ -248,6 +247,41 @@ const StickySidebar = (() => {
         dims.maxTranslateY = dims.containerHeight - dims.sidebarHeight;
 
         this._calcDimensionsWithScroll();
+      }
+
+      /**
+       * Vertical space the sidebar takes up beyond the inner wrapper's height: the
+       * sidebar's padding and border, the wrapper's margins, and child margins that
+       * collapse out of the wrapper.
+       * @private
+       * @return {Number}
+       */
+      _getSidebarExtraHeight(){
+        const px = (style, property) => Math.max(0, parseFloat(style[property]) || 0);
+        const sidebar = getComputedStyle(this.sidebar);
+        const inner = getComputedStyle(this.sidebarInner);
+
+        let extra = px(sidebar, 'paddingTop') + px(sidebar, 'paddingBottom') +
+          px(sidebar, 'borderTopWidth') + px(sidebar, 'borderBottomWidth') +
+          px(inner, 'marginTop') + px(inner, 'marginBottom');
+
+        // Only a plain block wrapper lets child margins collapse through it; fixed or
+        // absolute positioning makes it contain them, so they count in offsetHeight.
+        const collapses = 'block' === inner.display && 'visible' === inner.overflow &&
+          ('static' === inner.position || 'relative' === inner.position);
+
+        if( collapses ){
+          const first = this.sidebarInner.firstElementChild;
+          const last = this.sidebarInner.lastElementChild;
+
+          if( first && ! px(inner, 'paddingTop') && ! px(inner, 'borderTopWidth') )
+            extra += px(getComputedStyle(first), 'marginTop');
+
+          if( last && ! px(inner, 'paddingBottom') && ! px(inner, 'borderBottomWidth') )
+            extra += px(getComputedStyle(last), 'marginBottom');
+        }
+
+        return extra;
       }
 
       /**
@@ -340,8 +374,7 @@ const StickySidebar = (() => {
         var colliderTop = dims.viewportTop + dims.topSpacing;
         var affixType = this.affixedType;
 
-       if( colliderTop <= dims.containerTop ||
-           dims.containerHeight <= Math.max(dims.sidebarHeight, dims.sidebarOuterHeight) ){
+       if( colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarOuterHeight ){
           dims.translateY = 0;
           affixType = 'STATIC';
         } else {

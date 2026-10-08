@@ -280,10 +280,10 @@
           dims.sidebarHeight = this.sidebarInner.offsetHeight;
           dims.sidebarWidth = this.sidebarInner.offsetWidth;
 
-          // Height the sidebar takes up in the container, including its own padding and
-          // margins collapsing out of the inner wrapper. Only measurable while static,
-          // since affixing pins the sidebar to the inner wrapper's height.
-          if ('STATIC' === this.affixedType) dims.sidebarOuterHeight = this.sidebar.offsetHeight;
+          // Height the sidebar's content needs in the container. Measured from the inner
+          // wrapper rather than the sidebar itself, which may be stretched to the container
+          // height (flex/grid) or pinned to the inner wrapper's height while affixed.
+          dims.sidebarOuterHeight = dims.sidebarHeight + this._getSidebarExtraHeight();
 
           // Screen viewport dimensions.
           dims.viewportHeight = window.innerHeight;
@@ -292,6 +292,32 @@
           dims.maxTranslateY = dims.containerHeight - dims.sidebarHeight;
 
           this._calcDimensionsWithScroll();
+        }
+      }, {
+        key: '_getSidebarExtraHeight',
+        value: function _getSidebarExtraHeight() {
+          var px = function (style, property) {
+            return Math.max(0, parseFloat(style[property]) || 0);
+          };
+          var sidebar = getComputedStyle(this.sidebar);
+          var inner = getComputedStyle(this.sidebarInner);
+
+          var extra = px(sidebar, 'paddingTop') + px(sidebar, 'paddingBottom') + px(sidebar, 'borderTopWidth') + px(sidebar, 'borderBottomWidth') + px(inner, 'marginTop') + px(inner, 'marginBottom');
+
+          // Only a plain block wrapper lets child margins collapse through it; fixed or
+          // absolute positioning makes it contain them, so they count in offsetHeight.
+          var collapses = 'block' === inner.display && 'visible' === inner.overflow && ('static' === inner.position || 'relative' === inner.position);
+
+          if (collapses) {
+            var first = this.sidebarInner.firstElementChild;
+            var last = this.sidebarInner.lastElementChild;
+
+            if (first && !px(inner, 'paddingTop') && !px(inner, 'borderTopWidth')) extra += px(getComputedStyle(first), 'marginTop');
+
+            if (last && !px(inner, 'paddingBottom') && !px(inner, 'borderBottomWidth')) extra += px(getComputedStyle(last), 'marginBottom');
+          }
+
+          return extra;
         }
       }, {
         key: '_calcDimensionsWithScroll',
@@ -362,7 +388,7 @@
           var colliderTop = dims.viewportTop + dims.topSpacing;
           var affixType = this.affixedType;
 
-          if (colliderTop <= dims.containerTop || dims.containerHeight <= Math.max(dims.sidebarHeight, dims.sidebarOuterHeight)) {
+          if (colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarOuterHeight) {
             dims.translateY = 0;
             affixType = 'STATIC';
           } else {
