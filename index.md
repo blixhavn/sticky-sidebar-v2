@@ -204,7 +204,7 @@ var stickySidebar = new StickySidebar('#sidebar', {
     topSpacing: 0,
     bottomSpacing: 0,
     containerSelector: false,
-    innerWrapperSelector: '.sidebar__inner',
+    innerWrapperSelector: '.inner-wrapper-sticky',
     otherColumnSelector: false,
     scrollContainer: false,
     stickyClass: 'is-affixed',
@@ -248,7 +248,7 @@ var sidebar = new StickySidebar('.sidebar', {innerWrapperSelector: '.sidebar__in
 
 #### otherColumnSelector
 
-Another column in the same container. The shorter of the two columns sticks, and this is decided again when either column changes height. Affix events are fired on whichever column is sticking, and the column that stops sticking receives the static event. ``Default: false``.
+Another column in the same container. The shorter of the two columns sticks, and this is decided again when either column changes height. A column that is not displayed, such as ``display: none``, is left out of the comparison. Affix events are fired on whichever column is sticking, and the column that stops sticking receives the static event. ``Default: false``.
 
 {% highlight javascript %}
 var sidebar = new StickySidebar('#sidebar', {otherColumnSelector: '#content'});
@@ -325,7 +325,7 @@ sidebar.addEventListener('affix.bottom.stickySidebar', function (event) {
 
 ## Public Methods
 
-``updateSticky`` - Force re-calculation of all cached dimensions of sidebar, container and viewport and update position of sidebar according to the new dimensions. The same function of trigger event `update.sticky`, read about events above.
+``updateSticky`` - Force re-calculation of all cached dimensions of sidebar, container and viewport and update position of sidebar according to the new dimensions. Dispatching ``update.stickySidebar`` on the element passed to the constructor does the same thing.
 
 {% highlight javascript %}
 var stickySidebar = new StickySidebar('.sidebar');
