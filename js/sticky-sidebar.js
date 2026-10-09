@@ -150,6 +150,8 @@
         this._initialized = false;
         this._reStyle = false;
         this._breakpoint = false;
+        // Set when the sticky column changes. The new column has no tracked position yet.
+        this._reacquire = false;
 
         // Dimensions of sidebar, container and screen viewport.
         this.dimensions = {
@@ -303,12 +305,22 @@
 
           if (column === this.sidebar) return;
 
-          this._clearColumn(this.sidebar, this.sidebarInner);
+          var previous = this.sidebar;
+          var previousType = this.affixedType;
+
+          // The column we leave is back in normal flow. Tell its listeners, since later
+          // affix events are fired on the column that is sticking now.
+          if ('STATIC' !== previousType) StickySidebar.eventTrigger(previous, 'affix.static' + EVENT_KEY);
+
+          this._clearColumn(previous, this.sidebarInner);
           this.sidebar = column;
           this.sidebarInner = inner;
           this.affixedType = 'STATIC';
           this.dimensions.translateY = 0;
           this._reStyle = true;
+          this._reacquire = true;
+
+          if ('STATIC' !== previousType) StickySidebar.eventTrigger(previous, 'affixed.static' + EVENT_KEY);
         }
       }, {
         key: '_columnContentHeight',
@@ -444,11 +456,19 @@
           var colliderTop = dims.viewportTop + dims.topSpacing;
           var affixType = this.affixedType;
 
+          // Scroll-up positioning continues from the current translate. A column that just
+          // became sticky has none, so place it as if scrolling down once, then keep going
+          // with the real scroll direction.
+          var reacquire = this._reacquire;
+          this._reacquire = false;
+
           if (colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarOuterHeight) {
             dims.translateY = 0;
             affixType = 'STATIC';
+          } else if (reacquire || 'up' !== this.direction) {
+            affixType = this._getAffixTypeScrollingDown();
           } else {
-            affixType = 'up' === this.direction ? this._getAffixTypeScrollingUp() : this._getAffixTypeScrollingDown();
+            affixType = this._getAffixTypeScrollingUp();
           }
 
           // Make sure the translate Y is not bigger than container height.

@@ -21,9 +21,15 @@
 			font-size: 30px;
 		}
 
+		header .intro,
 		header p{
 			max-width: 700px;
-			margin: 0 auto 16px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		header p{
+			margin-bottom: 16px;
 		}
 
 		.container{
@@ -41,6 +47,9 @@
 			border: 1px dotted red;
 			background-color: rgba(255, 0, 0, 0.01);
 			padding: 10px;
+			position: relative;
+			transform: translate3d(0, 0, 0);
+			will-change: position, transform;
 		}
 
 		#content{
@@ -85,7 +94,7 @@
 </head>
 <body>
 	<header>
-		<div class="container">
+		<div class="intro">
 			<h1>Site Title</h1>
 			<p>The article starts out shorter, so it sticks. Add paragraphs until the article is taller and the sidebar sticks instead. Removing them switches back.</p>
 			<p>
