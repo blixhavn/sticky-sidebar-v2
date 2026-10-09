@@ -11,6 +11,24 @@
 
 		body{
 			font-family: Arial;
+			margin: 0;
+			padding-top: 44px;
+		}
+
+		.toolbar{
+			position: fixed;
+			z-index: 5;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 44px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 0 12px;
+			background: #fff;
+			border-bottom: 1px solid #e5e5e5;
+			font-size: 14px;
 		}
 
 		header{
@@ -18,18 +36,15 @@
 		}
 
 		header h1{
-			font-size: 30px;
+			font-size: 22px;
+			margin: 12px 0;
 		}
 
-		header .intro,
-		header p{
+		header .intro{
 			max-width: 700px;
 			margin-left: auto;
 			margin-right: auto;
-		}
-
-		header p{
-			margin-bottom: 16px;
+			padding: 0 12px;
 		}
 
 		.container{
@@ -62,13 +77,8 @@
 			border: 1px dotted green;
 			padding: 10px;
 			position: relative;
-			transform: translate(0, 0);
 			transform: translate3d(0, 0, 0);
 			will-change: position, transform;
-		}
-
-		#status{
-			margin-left: 12px;
 		}
 
 		footer{
@@ -93,15 +103,15 @@
 	</style>
 </head>
 <body>
+	<div class="toolbar">
+		<button id="add" type="button">Add a paragraph</button>
+		<button id="remove" type="button">Remove a paragraph</button>
+		<span id="status"></span>
+	</div>
+
 	<header>
 		<div class="intro">
 			<h1>Site Title</h1>
-			<p>The article starts out shorter, so it sticks. Add paragraphs until the article is taller and the sidebar sticks instead. Removing them switches back.</p>
-			<p>
-				<button id="add" type="button">Add a paragraph</button>
-				<button id="remove" type="button">Remove a paragraph</button>
-				<span id="status"></span>
-			</p>
 		</div>
 	</header>
 
@@ -121,6 +131,7 @@
 		<div id="content">
 			<div class="column__inner" id="article">
 				<p>This article stays in view while it is the shorter column.</p>
+				<p>Add paragraphs until this column is taller, and the sidebar sticks instead.</p>
 			</div>
 		</div>
 	</div>
@@ -130,10 +141,10 @@
 	</footer>
 
 	<script type="text/javascript" src="../js/rAF.js"></script>
-	<script type="text/javascript" src="../js/sticky-sidebar.js"></script>
+	<script type="text/javascript" src="../js/sticky-sidebar.js?v=3"></script>
 	<script type="text/javascript">
 		var sidebar = new StickySidebar('#sidebar', {
-			topSpacing: 20,
+			topSpacing: 64,
 			bottomSpacing: 20,
 			containerSelector: '.container',
 			innerWrapperSelector: '.column__inner',
