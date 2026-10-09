@@ -12,6 +12,8 @@ As the original project is currently inactive, this fork is an attempt to revive
 
 [Scrollable Sticky Element](https://blixhavn.github.io/sticky-sidebar-v2/examples/scrollable-element.html)
 
+[Sidebar taller than the content](https://blixhavn.github.io/sticky-sidebar-v2/examples/shorter-column.html)
+
 For complete documentation and examples see [blixhavn.github.io/sticky-sidebar-v2](http://blixhavn.github.io/sticky-sidebar-v2)
 
 
@@ -20,7 +22,7 @@ For complete documentation and examples see [blixhavn.github.io/sticky-sidebar-v
 * It does not re-calculate all dimensions when scrolling, just necessary dimensions.
 * Super smooth without incurring scroll lag or jank and no page reflows.
 * It has event trigger on each affix type to hook your code under particular situation.
-* Handle the sidebar when is tall or too short compared to the rest of the container.
+* Handle the sidebar when it is taller or shorter than the viewport.
 * Zero dependencies and super simple to setup.
 
 ## Install
@@ -142,6 +144,24 @@ let sidebar;
 onMounted(() => { sidebar = new StickySidebar('.sidebar', { containerSelector: '.main-content' }); });
 onBeforeUnmount(() => sidebar.destroy());
 ````
+
+
+## Sidebar taller than the content
+
+Sticky Sidebar sticks one element inside its container. If that element is already as tall as the container, there is no room for it to move, so it stays where it is. That is what happens when the sidebar is taller than the page content.
+
+Make the shorter column the sticky element. When the article is shorter than the sidebar, create the instance on the article:
+
+````js
+const article = new StickySidebar('#content', {
+  containerSelector: '.container',
+  innerWrapperSelector: '.content__inner',
+  topSpacing: 20,
+  bottomSpacing: 20
+});
+````
+
+The article stays in view while the sidebar scrolls past, and it stops at the bottom of the container. The container has to wrap both columns. [See the demo](https://blixhavn.github.io/sticky-sidebar-v2/examples/shorter-column.html).
 
 ## Browser Support
 
