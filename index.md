@@ -27,7 +27,7 @@ layout: default
 * It does not re-calculate all dimensions when scrolling, just neccessary dimensions.
 * Super smooth without incurring scroll lag or jank and no page reflows.
 * It has event trigger on each affix type to hook your code under particular situations.
-* Handle the sidebar when it is taller or shorter than the viewport. When the sidebar is taller than the rest of the container, stick the shorter column instead.
+* Handle the sidebar when it is taller or shorter than the viewport. With ``otherColumnSelector``, the shorter column sticks instead, including when the heights change later.
 * Zero dependencies and super simple to setup.
 
 ## Examples
@@ -61,7 +61,7 @@ var sidebar = new StickySidebar('#sidebar', {topSpacing: 20});
 Sticky sidebar is smart enough to handle sidebar when it's taller than the viewport. You don't have to worry about content, it will scroll the sidebar independently, up and down.
 
 {% highlight javascript %}
-var sidebar = new stickySidebar('#sidebar', {topSpacing: 20});
+var sidebar = new StickySidebar('#sidebar', {topSpacing: 20});
 {% endhighlight javascript %}
 
 <div class="box-demo-button-wrapper">
@@ -205,6 +205,7 @@ var stickySidebar = new StickySidebar('#sidebar', {
     bottomSpacing: 0,
     containerSelector: false,
     innerWrapperSelector: '.sidebar__inner',
+    otherColumnSelector: false,
     scrollContainer: false,
     stickyClass: 'is-affixed',
     minWidth: 0
@@ -243,6 +244,14 @@ Inner wrapper selector of sticky sidebar, if this wrapper is not found inside si
 
 {% highlight javascript %}
 var sidebar = new StickySidebar('.sidebar', {innerWrapperSelector: '.sidebar__inner'});
+{% endhighlight javascript %}
+
+#### otherColumnSelector
+
+Another column in the same container. The shorter of the two columns sticks, and this is decided again when either column changes height. Affix events are fired on whichever column is sticking, and the column that stops sticking receives the static event. ``Default: false``.
+
+{% highlight javascript %}
+var sidebar = new StickySidebar('#sidebar', {otherColumnSelector: '#content'});
 {% endhighlight javascript %}
 
 #### scrollContainer
