@@ -159,7 +159,7 @@ const sidebar = new StickySidebar('.sidebar', {
 });
 ````
 
-Give both columns an inner wrapper with that selector. A column without one gets a wrapper created for it. While the article is shorter, the article stays in view as the sidebar scrolls past. When the article grows taller than the sidebar, the sidebar sticks instead. [See the demo](https://blixhavn.github.io/sticky-sidebar-v2/examples/shorter-column.html).
+Give both columns an inner wrapper with that selector. A column without one gets a wrapper created for it. While the article is shorter, the article stays in view as the sidebar scrolls past. When the article grows taller than the sidebar, the sidebar sticks instead. Affix events are fired on the column that is sticking, which can be either one, and the column that stops sticking receives the static event. [See the demo](https://blixhavn.github.io/sticky-sidebar-v2/examples/shorter-column.html).
 
 ## Browser Support
 
