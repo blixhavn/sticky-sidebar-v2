@@ -289,6 +289,8 @@ const StickySidebar = (() => {
        * @private
        */
       _columnContentHeight(column, inner){
+        // display:none has no box, so a height of 0 would win and stick an invisible column.
+        if( null === column.offsetParent && 0 === column.offsetHeight ) return Infinity;
         return inner.offsetHeight + this._getExtraHeight(column, inner);
       }
 
