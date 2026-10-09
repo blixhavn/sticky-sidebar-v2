@@ -44,6 +44,13 @@ const StickySidebar = (() => {
       innerWrapperSelector: '.inner-wrapper-sticky',
 
       /**
+       * Another column inside the same container. When set, the shorter of the two
+       * columns is the sticky one, and this follows later changes in either column's height.
+       * @type {String|False}
+       */
+      otherColumnSelector: false,
+
+      /**
        * The name of CSS class to apply to elements when they have become stuck.
        * @type {String|False}
        */
@@ -130,24 +137,12 @@ const StickySidebar = (() => {
       initialize(){
         this._setSupportFeatures();
 
-        // Get sticky sidebar inner wrapper, if not found, will create one.
-        if( this.options.innerWrapperSelector ){
-          this.sidebarInner = this.sidebar.querySelector(this.options.innerWrapperSelector);
-
-          if( null === this.sidebarInner )
-            this.sidebarInner = false;
-        }
-
-        if( ! this.sidebarInner ){
-          let wrapper = document.createElement('div');
-          wrapper.setAttribute('class', 'inner-wrapper-sticky');
-          this.sidebar.appendChild(wrapper);
-
-          while( this.sidebar.firstChild != wrapper )
-            wrapper.appendChild(this.sidebar.firstChild);
-
-          this.sidebarInner = this.sidebar.querySelector('.inner-wrapper-sticky');
-        }
+        // The element passed to the constructor. this.sidebar follows whichever column
+        // is currently sticky, which can be the other column.
+        this.primaryColumn = this.sidebar;
+        this.primaryInner = this.sidebarInner = this._ensureInnerWrapper(this.sidebar);
+        this.otherColumn = false;
+        this.otherColumnInner = false;
 
         // Container wrapper of the sidebar.
         if( this.options.containerSelector ){
@@ -161,6 +156,23 @@ const StickySidebar = (() => {
 
           if( ! containers.length )
             throw new Error("The container does not contains on the sidebar.");
+        }
+
+        if( this.options.otherColumnSelector ){
+          let columns = document.querySelectorAll(this.options.otherColumnSelector);
+          columns = Array.prototype.slice.call(columns);
+
+          columns.some((column) => {
+            if( column === this.primaryColumn || ! this.container.contains(column) ) return;
+            if( this.primaryColumn.contains(column) || column.contains(this.primaryColumn) ) return;
+            this.otherColumn = column;
+            return true;
+          });
+
+          if( ! this.otherColumn )
+            throw new Error("The other column must be another element inside the container.");
+
+          this.otherColumnInner = this._ensureInnerWrapper(this.otherColumn);
         }
 
         // Get scroll container, if provided
@@ -201,13 +213,69 @@ const StickySidebar = (() => {
         window.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
         this.eventTarget.addEventListener('scroll', this.handleEvent, { passive: true, capture: false });
 
-        this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
+        this.primaryColumn.addEventListener('update' + EVENT_KEY, this.handleEvent);
 
         if( 'undefined' !== typeof ResizeObserver ){
           this.resizeObserver = new ResizeObserver(() => this.handleEvent());
-          this.resizeObserver.observe(this.sidebarInner);
+          this.resizeObserver.observe(this.primaryInner);
           this.resizeObserver.observe(this.container);
+          if( this.otherColumnInner )
+            this.resizeObserver.observe(this.otherColumnInner);
         }
+      }
+
+      /**
+       * Inner wrapper of a column, created around its children when the configured
+       * selector matches nothing inside it.
+       * @private
+       * @param {HTMLElement} column
+       * @return {HTMLElement}
+       */
+      _ensureInnerWrapper(column){
+        let inner = this.options.innerWrapperSelector && column.querySelector(this.options.innerWrapperSelector);
+
+        if( ! inner ){
+          inner = document.createElement('div');
+          inner.setAttribute('class', 'inner-wrapper-sticky');
+          column.appendChild(inner);
+
+          while( column.firstChild != inner )
+            inner.appendChild(column.firstChild);
+        }
+
+        return inner;
+      }
+
+      /**
+       * Stick the shorter column when another column is configured. Content heights are
+       * compared, not the columns' own boxes, which stretching and affixing both change.
+       * @private
+       */
+      _selectStickyColumn(){
+        if( ! this.otherColumn ) return;
+
+        const primaryHeight = this._columnContentHeight(this.primaryColumn, this.primaryInner);
+        const otherHeight = this._columnContentHeight(this.otherColumn, this.otherColumnInner);
+        const column = primaryHeight <= otherHeight ? this.primaryColumn : this.otherColumn;
+        const inner = column === this.primaryColumn ? this.primaryInner : this.otherColumnInner;
+
+        if( column === this.sidebar ) return;
+
+        this._clearColumn(this.sidebar, this.sidebarInner);
+        this.sidebar = column;
+        this.sidebarInner = inner;
+        this.affixedType = 'STATIC';
+        this.dimensions.translateY = 0;
+        this._reStyle = true;
+      }
+
+      /**
+       * Height of a column's content, including padding and margins that collapse out of
+       * its inner wrapper.
+       * @private
+       */
+      _columnContentHeight(column, inner){
+        return inner.offsetHeight + this._getExtraHeight(column, inner);
       }
 
       /**
@@ -224,6 +292,7 @@ const StickySidebar = (() => {
        */
       calcDimensions(){
         if( this._breakpoint ) return;
+        this._selectStickyColumn();
         var dims = this.dimensions;
 
         // Container of sticky sidebar dimensions.
@@ -238,7 +307,7 @@ const StickySidebar = (() => {
         // Height the sidebar's content needs in the container. Measured from the inner
         // wrapper rather than the sidebar itself, which may be stretched to the container
         // height (flex/grid) or pinned to the inner wrapper's height while affixed.
-        dims.sidebarOuterHeight = dims.sidebarHeight + this._getSidebarExtraHeight();
+        dims.sidebarOuterHeight = this._columnContentHeight(this.sidebar, this.sidebarInner);
 
         // Screen viewport dimensions.
         dims.viewportHeight = window.innerHeight;
@@ -256,10 +325,10 @@ const StickySidebar = (() => {
        * @private
        * @return {Number}
        */
-      _getSidebarExtraHeight(){
+      _getExtraHeight(column, innerElement){
         const px = (style, property) => Math.max(0, parseFloat(style[property]) || 0);
-        const sidebar = getComputedStyle(this.sidebar);
-        const inner = getComputedStyle(this.sidebarInner);
+        const sidebar = getComputedStyle(column);
+        const inner = getComputedStyle(innerElement);
 
         let extra = px(sidebar, 'paddingTop') + px(sidebar, 'paddingBottom') +
           px(sidebar, 'borderTopWidth') + px(sidebar, 'borderBottomWidth') +
@@ -271,8 +340,8 @@ const StickySidebar = (() => {
           ('static' === inner.position || 'relative' === inner.position);
 
         if( collapses ){
-          const first = this.sidebarInner.firstElementChild;
-          const last = this.sidebarInner.lastElementChild;
+          const first = innerElement.firstElementChild;
+          const last = innerElement.lastElementChild;
 
           if( first && ! px(inner, 'paddingTop') && ! px(inner, 'borderTopWidth') )
             extra += px(getComputedStyle(first), 'marginTop');
@@ -530,8 +599,12 @@ const StickySidebar = (() => {
         var style = this._getStyle(affixType);
 
         if( (this.affixedType != affixType || force) && affixType ){
-          let affixEvent = 'affix.' + affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
-          StickySidebar.eventTrigger(this.sidebar, affixEvent);
+          const typeChanged = this.affixedType != affixType;
+
+          if( typeChanged ){
+            let affixEvent = 'affix.' + affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
+            StickySidebar.eventTrigger(this.sidebar, affixEvent);
+          }
 
           if( 'STATIC' === affixType )
             StickySidebar.removeClass(this.sidebar, this.options.stickyClass);
@@ -548,8 +621,10 @@ const StickySidebar = (() => {
             this.sidebarInner.style[key] = style.inner[key] + unit;
           }
 
-          let affixedEvent = 'affixed.'+ affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
-          StickySidebar.eventTrigger(this.sidebar, affixedEvent);
+          if( typeChanged ){
+            let affixedEvent = 'affixed.'+ affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
+            StickySidebar.eventTrigger(this.sidebar, affixedEvent);
+          }
         } else {
           if( this._initialized ) this.sidebarInner.style.left = style.inner.left;
         }
@@ -567,9 +642,11 @@ const StickySidebar = (() => {
           this._breakpoint = true;
           this.affixedType = 'STATIC';
 
-          this.sidebar.removeAttribute('style');
-          StickySidebar.removeClass(this.sidebar, this.options.stickyClass);
-          this.sidebarInner.removeAttribute('style');
+          this._clearColumn(this.primaryColumn, this.primaryInner);
+          if( this.otherColumn )
+            this._clearColumn(this.otherColumn, this.otherColumnInner);
+          this.sidebar = this.primaryColumn;
+          this.sidebarInner = this.primaryInner;
         } else {
           this._breakpoint = false;
         }
@@ -581,7 +658,13 @@ const StickySidebar = (() => {
        * @public
        */
       updateSticky(event = {}){
-        if( this._running ) return;
+        // A resize can arrive while a scroll update is waiting for its frame. Dropping it
+        // would miss a column-height change. Remember it and run it after this frame.
+        if( this._running ){
+          if( ! this._pendingEvent || 'scroll' === this._pendingEvent.type )
+            this._pendingEvent = event;
+          return;
+        }
         this._running = true;
 
         ((eventType) => {
@@ -606,6 +689,11 @@ const StickySidebar = (() => {
                 break;
             }
             this._running = false;
+            if( this._pendingEvent ){
+              const pending = this._pendingEvent;
+              this._pendingEvent = null;
+              this.updateSticky(pending);
+            }
           });
         })(event.type);
       }
@@ -643,7 +731,7 @@ const StickySidebar = (() => {
         window.removeEventListener('resize', this.handleEvent, {capture: false});
         this.eventTarget.removeEventListener('scroll', this.handleEvent, {capture: false});
 
-        this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
+        this.primaryColumn.removeEventListener('update' + EVENT_KEY, this.handleEvent);
 
         if( this.resizeObserver ){
           this.resizeObserver.disconnect();
@@ -653,21 +741,34 @@ const StickySidebar = (() => {
         if( this._running ){
           cancelAnimationFrame(this._animationFrame);
           this._running = false;
+          this._pendingEvent = null;
         }
 
-        this.sidebar.classList.remove(this.options.stickyClass);
-        this.sidebar.style.minHeight = '';
+        this._clearColumn(this.primaryColumn, this.primaryInner);
+        if( this.otherColumn )
+          this._clearColumn(this.otherColumn, this.otherColumnInner);
+      }
 
-        var styleReset = {inner: {}, outer: {}};
+      /**
+       * Remove the inline styles and class this plugin applies to a column.
+       * @private
+       */
+      _clearColumn(column, inner){
+        if( ! column ) return;
 
-        styleReset.inner = {position: '', top: '', left: '', bottom: '', width: '',  transform: ''};
-        styleReset.outer = {height: '', position: ''};
+        column.classList.remove(this.options.stickyClass);
+        column.style.minHeight = '';
+        column.style.height = '';
+        column.style.position = '';
 
-        for( let key in styleReset.outer )
-          this.sidebar.style[key] = styleReset.outer[key];
+        if( ! inner ) return;
 
-        for( let key in styleReset.inner )
-          this.sidebarInner.style[key] = styleReset.inner[key];
+        inner.style.position = '';
+        inner.style.top = '';
+        inner.style.left = '';
+        inner.style.bottom = '';
+        inner.style.width = '';
+        inner.style.transform = '';
       }
 
       /**

@@ -12,6 +12,8 @@ As the original project is currently inactive, this fork is an attempt to revive
 
 [Scrollable Sticky Element](https://blixhavn.github.io/sticky-sidebar-v2/examples/scrollable-element.html)
 
+[Sidebar taller than the content](https://blixhavn.github.io/sticky-sidebar-v2/examples/shorter-column.html)
+
 For complete documentation and examples see [blixhavn.github.io/sticky-sidebar-v2](http://blixhavn.github.io/sticky-sidebar-v2)
 
 
@@ -142,6 +144,22 @@ let sidebar;
 onMounted(() => { sidebar = new StickySidebar('.sidebar', { containerSelector: '.main-content' }); });
 onBeforeUnmount(() => sidebar.destroy());
 ````
+
+## Sidebar taller than the content
+
+The plugin sticks one element, and only while that element is shorter than its container. A sidebar that is already the tallest column has nowhere to move, so it stays put. Which column is taller usually depends on the content being shown, and that can change after the page is set up.
+
+Pass the other column as ``otherColumnSelector``. The shorter column is the sticky one, and this is checked again whenever either column changes height:
+
+````js
+const sidebar = new StickySidebar('.sidebar', {
+  containerSelector: '.main-content',
+  innerWrapperSelector: '.column__inner',
+  otherColumnSelector: '.content'
+});
+````
+
+Give both columns an inner wrapper with that selector. A column without one gets a wrapper created for it. While the article is shorter, the article stays in view as the sidebar scrolls past. When the article grows taller than the sidebar, the sidebar sticks instead. [See the demo](https://blixhavn.github.io/sticky-sidebar-v2/examples/shorter-column.html).
 
 ## Browser Support
 

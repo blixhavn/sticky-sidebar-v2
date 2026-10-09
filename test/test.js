@@ -879,6 +879,95 @@ describe('StickySidebar', () => {
     });
   });
 
+  describe('otherColumnSelector', () => {
+
+    const columns = () => {
+      fixture.innerHTML = '<div class="container" style="display: flow-root;">' +
+      '  <div class="sidebar" style="float: left; width: 200px;"><div class="column__inner" style="height: auto;">' +
+      '    <div class="sidebar-body" style="height: 900px;">Sidebar</div></div></div>' +
+      '  <div class="content" style="margin-left: 215px;"><div class="column__inner" style="height: auto;">' +
+      '    <div class="content-body" style="height: 120px;">Article</div></div></div>' +
+      '</div>';
+    };
+
+    const settled = (stickySidebar) => {
+      let chain = Promise.resolve();
+      for( let i = 0; i < 5; i++ )
+        chain = chain.then(() => new Promise((resolve) => setTimeout(resolve, 30))).then(() => mockRaf.step());
+      return chain.then(() => stickySidebar.sidebar);
+    };
+
+    it('Should throw when the other column is not inside the container.', () => {
+      fixture.innerHTML = '<div class="container"><div class="sidebar"><span>Lorem Ipsum</span></div></div>' +
+      '<div class="content"><span>Lorem Ipsum</span></div>';
+
+      assert.throws(() => {
+        new StickySidebar('.sidebar', {containerSelector: '.container', otherColumnSelector: '.content'});
+      }, 'The other column must be another element inside the container.');
+    });
+
+    it('Should stick the other column while the sidebar is taller.', () => {
+      columns();
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container',
+        innerWrapperSelector: '.column__inner',
+        otherColumnSelector: '.content'
+      });
+
+      window.scrollTo(0, 300);
+      window.dispatchEvent(new Event('scroll'));
+
+      return settled(stickySidebar).then(() => {
+        assert.equal(stickySidebar.sidebar, document.querySelector('.content'));
+        assert.isTrue(document.querySelector('.content').classList.contains('is-affixed'));
+        assert.isNotTrue(document.querySelector('.sidebar').classList.contains('is-affixed'));
+      });
+    });
+
+    it('Should switch to the sidebar when the other column becomes taller.', () => {
+      columns();
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container',
+        innerWrapperSelector: '.column__inner',
+        otherColumnSelector: '.content'
+      });
+
+      window.scrollTo(0, 300);
+      document.querySelector('.content-body').style.height = '1400px';
+      // The resize observer delivers this on its own; flush the update it schedules.
+      stickySidebar.updateSticky();
+
+      return settled(stickySidebar).then(() => {
+        assert.equal(stickySidebar.sidebar, document.querySelector('.sidebar'));
+        assert.isTrue(document.querySelector('.sidebar').classList.contains('is-affixed'));
+        assert.isNotTrue(document.querySelector('.content').classList.contains('is-affixed'));
+      });
+    });
+
+    it('Should not keep switching while neither column changes.', () => {
+      columns();
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container',
+        innerWrapperSelector: '.column__inner',
+        otherColumnSelector: '.content'
+      });
+      let changes = 0;
+      ['.sidebar', '.content'].forEach((selector) => {
+        ['static', 'top', 'bottom', 'unbottom', 'container-bottom'].forEach((type) => {
+          document.querySelector(selector).addEventListener('affixed.' + type + '.stickySidebar', () => changes++);
+        });
+      });
+
+      window.scrollTo(0, 300);
+      return settled(stickySidebar).then(() => {
+        changes = 0;
+        return settled(stickySidebar);
+      }).then(() => {
+        assert.equal(changes, 0);
+      });
+    });
+  });
+
   describe('widthBreakpoint', () => {
 
     it('Should stickness be broken if options.minWidth bigger than viewport width.', () => {
