@@ -27,7 +27,7 @@ layout: default
 * It does not re-calculate all dimensions when scrolling, just neccessary dimensions.
 * Super smooth without incurring scroll lag or jank and no page reflows.
 * It has event trigger on each affix type to hook your code under particular situations.
-* Handle the sidebar when it is tall or too short compared to the rest of the container.
+* Handle the sidebar when it is taller or shorter than the viewport. When the sidebar is taller than the rest of the container, stick the shorter column instead.
 * Zero dependencies and super simple to setup.
 
 ## Examples
@@ -80,23 +80,44 @@ var sidebar = new stickySidebar('#sidebar', {topSpacing: 20});
 
 <a href="./examples/scrollable-element.html" target="_blank">Scrollable Sticky Element</a>
 
+#### Sidebar taller than the content
+
+The plugin sticks one element inside its container. When the sidebar is taller than the rest of that container, sticking the sidebar has nowhere to go, so it stays put. Stick the shorter column instead. In this example the article is the sticky element:
+
+{% highlight javascript %}
+var article = new StickySidebar('#content', {
+    containerSelector: '.container',
+    innerWrapperSelector: '.content__inner',
+    topSpacing: 20,
+    bottomSpacing: 20
+});
+{% endhighlight javascript %}
+
+The article stays in view while the long sidebar scrolls past, and stops at the bottom of the container.
+
+<div class="box-demo-button-wrapper">
+	<button>Scroll It!</button>
+	<div class="clearfix"></div>
+</div>
+
+<div class="box-demo">
+	<div class="box-demo__header">
+		<span class="box-demo__title">Shorter Column</span>
+	</div>
+	<div class="box-demo__inner">
+		<iframe src="./examples/shorter-column.html" width="100%" height="220"></iframe>
+	</div>
+</div>
+
+<a href="./examples/shorter-column.html" target="_blank">Shorter Column</a>
+
 --------------------------
 
 ## Installation
 
-You can install sticky sidebar plugin from Bower, NPM or just simply download it from <a href="#">GitHub</a> then put ``sticky-sidebar.js`` file into your project folder.
+Install with npm, or download ``sticky-sidebar.js`` from <a href="https://github.com/blixhavn/sticky-sidebar-v2">GitHub</a> and link to it from your page.
 
-#### Bower
-
-If you are using Bower as package manager:
-
-````
-bower install sticky-sidebar-v2
-````
-
-#### NPM
-
-If you are using NPM as package manager:
+#### npm
 
 ````
 npm install sticky-sidebar-v2
@@ -183,7 +204,7 @@ var stickySidebar = new StickySidebar('#sidebar', {
     bottomSpacing: 0,
     containerSelector: false,
     innerWrapperSelector: '.sidebar__inner',
-    scrollContainer: false',
+    scrollContainer: false,
     stickyClass: 'is-affixed',
     minWidth: 0
 });

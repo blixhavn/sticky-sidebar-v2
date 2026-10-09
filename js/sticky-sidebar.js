@@ -1,29 +1,18 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.StickySidebar = {})));
-}(this, (function (exports) { 'use strict';
-
-var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
-
-
-function unwrapExports (x) {
-	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-}
-
-function createCommonjsModule(fn, module) {
-	return module = { exports: {} }, fn(module, module.exports), module.exports;
-}
-
-var stickySidebar = createCommonjsModule(function (module, exports) {
-(function (global, factory) {
-  if (typeof undefined === "function" && undefined.amd) {
-    undefined(['exports'], factory);
-  } else {
+  if (typeof define === "function" && define.amd) {
+    define(['exports'], factory);
+  } else if (typeof exports !== "undefined") {
     factory(exports);
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod.exports);
+    global.stickySidebar = mod.exports;
   }
-})(commonjsGlobal, function (exports) {
+})(this, function (exports) {
+  'use strict';
+
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
@@ -53,9 +42,9 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
   }();
 
   /**
-   * Sticky Sidebar JavaScript Plugin.
-   * @version 3.3.4
-   * @author Ahmed Bouhuolia <a.bouhuolia@gmail.com>
+   * Sticky Sidebar v2 JavaScript Plugin.
+   * @version 1.2.0
+   * @author Øystein Blixhavn <oystein@blixhavn.no>
    * @license The MIT License (MIT)
    */
   var StickySidebar = function () {
@@ -65,6 +54,8 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
     // ---------------------------------
     //
     var EVENT_KEY = '.stickySidebar';
+    var VERSION = '1.2.0';
+
     var DEFAULTS = {
       /**
        * Additional top spacing of the element when it becomes sticky.
@@ -85,6 +76,11 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       containerSelector: false,
 
       /**
+       * Parent element where the scrolling happens.
+       */
+      scrollContainer: false,
+
+      /**
        * Inner wrapper selector.
        * @type {String}
        */
@@ -95,12 +91,6 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
        * @type {String|False}
        */
       stickyClass: 'is-affixed',
-
-      /**
-       * Detect when sidebar and its container change height so re-calculate their dimensions.
-       * @type {Boolean}
-       */
-      resizeSensor: true,
 
       /**
        * The sidebar returns to its normal position if its width below this value.
@@ -137,7 +127,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
 
         // Sidebar element query if there's no one, throw error.
         this.sidebar = 'string' === typeof sidebar ? document.querySelector(sidebar) : sidebar;
-        if ('undefined' === typeof this.sidebar) throw new Error("There is no specific sidebar element.");
+        if (!this.sidebar) throw new Error("There is no specific sidebar element.");
 
         this.sidebarInner = false;
         this.container = this.sidebar.parentElement;
@@ -163,6 +153,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           bottomSpacing: 0,
           lastBottomSpacing: 0,
           sidebarHeight: 0,
+          sidebarOuterHeight: 0,
           sidebarWidth: 0,
           containerTop: 0,
           containerHeight: 0,
@@ -181,7 +172,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }
 
       /**
-       * Initializes the sticky sidebar by adding inner wrapper, define its container, 
+       * Initializes the sticky sidebar by adding inner wrapper, define its container,
        * min-width breakpoint, calculating dimensions, adding helper classes and inline style.
        * @private
        */
@@ -224,6 +215,9 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
             if (!containers.length) throw new Error("The container does not contains on the sidebar.");
           }
 
+          // Get scroll container, if provided
+          this.scrollContainer = this.options.scrollContainer ? document.querySelector(this.options.scrollContainer) : undefined;
+
           // If top/bottom spacing is not function parse value to integer.
           if ('function' !== typeof this.options.topSpacing) this.options.topSpacing = parseInt(this.options.topSpacing) || 0;
 
@@ -247,14 +241,23 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'bindEvents',
         value: function bindEvents() {
-          window.addEventListener('resize', this, { passive: true, capture: false });
-          window.addEventListener('scroll', this, { passive: true, capture: false });
+          var _this3 = this;
 
-          this.sidebar.addEventListener('update' + EVENT_KEY, this);
+          this.eventTarget = this.scrollContainer ? this.scrollContainer : window;
 
-          if (this.options.resizeSensor && 'undefined' !== typeof ResizeSensor) {
-            new ResizeSensor(this.sidebarInner, this.handleEvent);
-            new ResizeSensor(this.container, this.handleEvent);
+          // Listen with the bound function rather than `this`, so destroy() can remove the
+          // listeners even when called through a proxy of the instance (e.g. Vue 3 reactivity).
+          window.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
+          this.eventTarget.addEventListener('scroll', this.handleEvent, { passive: true, capture: false });
+
+          this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
+
+          if ('undefined' !== typeof ResizeObserver) {
+            this.resizeObserver = new ResizeObserver(function () {
+              return _this3.handleEvent();
+            });
+            this.resizeObserver.observe(this.sidebarInner);
+            this.resizeObserver.observe(this.container);
           }
         }
       }, {
@@ -277,6 +280,11 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           dims.sidebarHeight = this.sidebarInner.offsetHeight;
           dims.sidebarWidth = this.sidebarInner.offsetWidth;
 
+          // Height the sidebar's content needs in the container. Measured from the inner
+          // wrapper rather than the sidebar itself, which may be stretched to the container
+          // height (flex/grid) or pinned to the inner wrapper's height while affixed.
+          dims.sidebarOuterHeight = dims.sidebarHeight + this._getSidebarExtraHeight();
+
           // Screen viewport dimensions.
           dims.viewportHeight = window.innerHeight;
 
@@ -286,15 +294,47 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           this._calcDimensionsWithScroll();
         }
       }, {
+        key: '_getSidebarExtraHeight',
+        value: function _getSidebarExtraHeight() {
+          var px = function (style, property) {
+            return Math.max(0, parseFloat(style[property]) || 0);
+          };
+          var sidebar = getComputedStyle(this.sidebar);
+          var inner = getComputedStyle(this.sidebarInner);
+
+          var extra = px(sidebar, 'paddingTop') + px(sidebar, 'paddingBottom') + px(sidebar, 'borderTopWidth') + px(sidebar, 'borderBottomWidth') + px(inner, 'marginTop') + px(inner, 'marginBottom');
+
+          // Only a plain block wrapper lets child margins collapse through it; fixed or
+          // absolute positioning makes it contain them, so they count in offsetHeight.
+          var collapses = 'block' === inner.display && 'visible' === inner.overflow && ('static' === inner.position || 'relative' === inner.position);
+
+          if (collapses) {
+            var first = this.sidebarInner.firstElementChild;
+            var last = this.sidebarInner.lastElementChild;
+
+            if (first && !px(inner, 'paddingTop') && !px(inner, 'borderTopWidth')) extra += px(getComputedStyle(first), 'marginTop');
+
+            if (last && !px(inner, 'paddingBottom') && !px(inner, 'borderBottomWidth')) extra += px(getComputedStyle(last), 'marginBottom');
+          }
+
+          return extra;
+        }
+      }, {
         key: '_calcDimensionsWithScroll',
         value: function _calcDimensionsWithScroll() {
           var dims = this.dimensions;
+          var lastViewportLeft = dims.viewportLeft;
 
           dims.sidebarLeft = StickySidebar.offsetRelative(this.sidebar).left;
 
-          dims.viewportTop = document.documentElement.scrollTop || document.body.scrollTop;
+          if (this.scrollContainer) {
+            dims.viewportTop = this.scrollContainer.scrollTop;
+            dims.viewportLeft = this.scrollContainer.scrollLeft;
+          } else {
+            dims.viewportTop = document.documentElement.scrollTop || document.body.scrollTop;
+            dims.viewportLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+          }
           dims.viewportBottom = dims.viewportTop + dims.viewportHeight;
-          dims.viewportLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
 
           dims.topSpacing = this.options.topSpacing;
           dims.bottomSpacing = this.options.bottomSpacing;
@@ -308,11 +348,15 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
             if (dims.topSpacing < dims.lastTopSpacing) {
               dims.translateY += dims.lastTopSpacing - dims.topSpacing;
               this._reStyle = true;
+            } else if (lastViewportLeft !== dims.viewportLeft) {
+              this._reStyle = true;
             }
           } else if ('VIEWPORT-BOTTOM' === this.affixedType) {
             // Adjust translate Y in the case decrease bottom spacing value.
             if (dims.bottomSpacing < dims.lastBottomSpacing) {
               dims.translateY += dims.lastBottomSpacing - dims.bottomSpacing;
+              this._reStyle = true;
+            } else if (lastViewportLeft !== dims.viewportLeft) {
               this._reStyle = true;
             }
           }
@@ -323,9 +367,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'isSidebarFitsViewport',
         value: function isSidebarFitsViewport() {
-          var dims = this.dimensions;
-          var offset = this.scrollDirection === 'down' ? dims.lastBottomSpacing : dims.lastTopSpacing;
-          return this.dimensions.sidebarHeight + offset < this.dimensions.viewportHeight;
+          return this.dimensions.viewportHeight >= this.dimensions.lastBottomSpacing + this.dimensions.lastTopSpacing + this.dimensions.sidebarHeight;
         }
       }, {
         key: 'observeScrollDir',
@@ -346,7 +388,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           var colliderTop = dims.viewportTop + dims.topSpacing;
           var affixType = this.affixedType;
 
-          if (colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarHeight) {
+          if (colliderTop <= dims.containerTop || dims.containerHeight <= dims.sidebarOuterHeight) {
             dims.translateY = 0;
             affixType = 'STATIC';
           } else {
@@ -430,7 +472,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
                 left: dims.sidebarLeft - dims.viewportLeft, width: dims.sidebarWidth };
               break;
             case 'VIEWPORT-BOTTOM':
-              style.inner = { position: 'fixed', top: 'auto', left: dims.sidebarLeft,
+              style.inner = { position: 'fixed', top: 'auto', left: dims.sidebarLeft - dims.viewportLeft,
                 bottom: dims.bottomSpacing, width: dims.sidebarWidth };
               break;
             case 'CONTAINER-BOTTOM':
@@ -462,6 +504,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           if (this._breakpoint) return;
 
           force = this._reStyle || force || false;
+          this._reStyle = false;
 
           var offsetTop = this.options.topSpacing;
           var offsetBottom = this.options.bottomSpacing;
@@ -511,7 +554,7 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'updateSticky',
         value: function updateSticky() {
-          var _this3 = this;
+          var _this4 = this;
 
           var event = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
@@ -519,26 +562,27 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
           this._running = true;
 
           (function (eventType) {
-            requestAnimationFrame(function () {
+            _this4._animationFrame = requestAnimationFrame(function () {
               switch (eventType) {
                 // When browser is scrolling and re-calculate just dimensions
-                // within scroll. 
+                // within scroll.
                 case 'scroll':
-                  _this3._calcDimensionsWithScroll();
-                  _this3.observeScrollDir();
-                  _this3.stickyPosition();
+                  _this4._calcDimensionsWithScroll();
+                  _this4.observeScrollDir();
+                  _this4.stickyPosition();
                   break;
 
                 // When browser is resizing or there's no event, observe width
                 // breakpoint and re-calculate dimensions.
                 case 'resize':
                 default:
-                  _this3._widthBreakpoint();
-                  _this3.calcDimensions();
-                  _this3.stickyPosition(true);
+                  _this4._widthBreakpoint();
+                  _this4.calcDimensions();
+                  _this4.observeScrollDir();
+                  _this4.stickyPosition(true);
                   break;
               }
-              _this3._running = false;
+              _this4._running = false;
             });
           })(event.type);
         }
@@ -562,13 +606,23 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
       }, {
         key: 'destroy',
         value: function destroy() {
-          window.removeEventListener('resize', this, { capture: false });
-          window.removeEventListener('scroll', this, { capture: false });
+          window.removeEventListener('resize', this.handleEvent, { capture: false });
+          this.eventTarget.removeEventListener('scroll', this.handleEvent, { capture: false });
+
+          this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
+
+          if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+          }
+
+          if (this._running) {
+            cancelAnimationFrame(this._animationFrame);
+            this._running = false;
+          }
 
           this.sidebar.classList.remove(this.options.stickyClass);
           this.sidebar.style.minHeight = '';
-
-          this.sidebar.removeEventListener('update' + EVENT_KEY, this);
 
           var styleReset = { inner: {}, outer: {} };
 
@@ -579,9 +633,6 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
             this.sidebar.style[key] = styleReset.outer[key];
           }for (var _key2 in styleReset.inner) {
             this.sidebarInner.style[_key2] = styleReset.inner[_key2];
-          }if (this.options.resizeSensor && 'undefined' !== typeof ResizeSensor) {
-            ResizeSensor.detach(this.sidebarInner, this.handleEvent);
-            ResizeSensor.detach(this.container, this.handleEvent);
           }
         }
       }], [{
@@ -676,17 +727,5 @@ var stickySidebar = createCommonjsModule(function (module, exports) {
 
   // Global
   // -------------------------
-  window.StickySidebar = StickySidebar;
+  if ('undefined' !== typeof window) window.StickySidebar = StickySidebar;
 });
-});
-
-var stickySidebar$1 = unwrapExports(stickySidebar);
-
-exports['default'] = stickySidebar$1;
-exports.__moduleExports = stickySidebar;
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
-
-//# sourceMappingURL=sticky-sidebar.js.map
