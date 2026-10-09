@@ -37,7 +37,7 @@
 			color: #ce8888;
 		}
 
-		#sidebar .sidebar__inner{
+		#sidebar .column__inner{
 			border: 1px dotted red;
 			background-color: rgba(255, 0, 0, 0.01);
 			padding: 10px;
@@ -49,13 +49,17 @@
 			will-change: min-height;
 		}
 
-		#content .content__inner{
+		#content .column__inner{
 			border: 1px dotted green;
 			padding: 10px;
 			position: relative;
 			transform: translate(0, 0);
 			transform: translate3d(0, 0, 0);
 			will-change: position, transform;
+		}
+
+		#status{
+			margin-left: 12px;
 		}
 
 		footer{
@@ -83,14 +87,19 @@
 	<header>
 		<div class="container">
 			<h1>Site Title</h1>
-			<p>The sidebar is taller than the article, so the article is the sticky element.</p>
+			<p>The article starts out shorter, so it sticks. Add paragraphs until the article is taller and the sidebar sticks instead. Removing them switches back.</p>
+			<p>
+				<button id="add" type="button">Add a paragraph</button>
+				<button id="remove" type="button">Remove a paragraph</button>
+				<span id="status"></span>
+			</p>
 		</div>
 	</header>
 
 	<div class="container clearfix">
 		<div id="sidebar">
-			<div class="sidebar__inner">
-				<p>This sidebar is taller than the article beside it, so sticking it would have nowhere to go. Scroll to see the article stay in view instead.</p>
+			<div class="column__inner">
+				<p>This sidebar starts taller than the article. Scroll, and the article stays in view. It switches when the article becomes the taller column.</p>
 				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras tempus id leo et aliquam. Proin consectetur ligula vel neque cursus laoreet.</p>
 				<p>Nullam dignissim, augue at consectetur pellentesque, metus ipsum interdum sapien, quis ornare quam enim vel ipsum.</p>
 				<p>In congue nunc vitae magna tempor ultrices. Cras ultricies posuere elit. Nullam ultrices purus ante, at mattis leo placerat ac.</p>
@@ -101,8 +110,8 @@
 			</div>
 		</div>
 		<div id="content">
-			<div class="content__inner">
-				<p>This article stays in view while the sidebar scrolls past, and stops at the bottom of the container.</p>
+			<div class="column__inner" id="article">
+				<p>This article stays in view while it is the shorter column.</p>
 			</div>
 		</div>
 	</div>
@@ -114,12 +123,38 @@
 	<script type="text/javascript" src="../js/rAF.js"></script>
 	<script type="text/javascript" src="../js/sticky-sidebar.js"></script>
 	<script type="text/javascript">
-		var article = new StickySidebar('#content', {
+		var sidebar = new StickySidebar('#sidebar', {
 			topSpacing: 20,
 			bottomSpacing: 20,
 			containerSelector: '.container',
-			innerWrapperSelector: '.content__inner'
+			innerWrapperSelector: '.column__inner',
+			otherColumnSelector: '#content'
 		});
+
+		var article = document.getElementById('article');
+
+		function describe(){
+			var stuckArticle = document.getElementById('content').classList.contains('is-affixed');
+			var stuckSidebar = document.getElementById('sidebar').classList.contains('is-affixed');
+			document.getElementById('status').textContent = stuckArticle ? 'Sticking: the article' :
+				stuckSidebar ? 'Sticking: the sidebar' : 'Scrolling naturally';
+		}
+
+		document.getElementById('add').addEventListener('click', function(){
+			var paragraph = document.createElement('p');
+			paragraph.textContent = 'Added paragraph. The sticky column is whichever one is shorter right now, so this can change as the article grows.';
+			article.appendChild(paragraph);
+			setTimeout(describe, 50);
+		});
+
+		document.getElementById('remove').addEventListener('click', function(){
+			if( article.children.length > 1 )
+				article.removeChild(article.lastElementChild);
+			setTimeout(describe, 50);
+		});
+
+		window.addEventListener('scroll', function(){ setTimeout(describe, 50); });
+		describe();
 	</script>
 </body>
 </html>

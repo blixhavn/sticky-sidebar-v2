@@ -87,6 +87,13 @@
       innerWrapperSelector: '.inner-wrapper-sticky',
 
       /**
+       * Another column inside the same container. When set, the shorter of the two
+       * columns is the sticky one, and this follows later changes in either column's height.
+       * @type {String|False}
+       */
+      otherColumnSelector: false,
+
+      /**
        * The name of CSS class to apply to elements when they have become stuck.
        * @type {String|False}
        */
@@ -185,22 +192,12 @@
 
           this._setSupportFeatures();
 
-          // Get sticky sidebar inner wrapper, if not found, will create one.
-          if (this.options.innerWrapperSelector) {
-            this.sidebarInner = this.sidebar.querySelector(this.options.innerWrapperSelector);
-
-            if (null === this.sidebarInner) this.sidebarInner = false;
-          }
-
-          if (!this.sidebarInner) {
-            var wrapper = document.createElement('div');
-            wrapper.setAttribute('class', 'inner-wrapper-sticky');
-            this.sidebar.appendChild(wrapper);
-
-            while (this.sidebar.firstChild != wrapper) {
-              wrapper.appendChild(this.sidebar.firstChild);
-            }this.sidebarInner = this.sidebar.querySelector('.inner-wrapper-sticky');
-          }
+          // The element passed to the constructor. this.sidebar follows whichever column
+          // is currently sticky, which can be the other column.
+          this.primaryColumn = this.sidebar;
+          this.primaryInner = this.sidebarInner = this._ensureInnerWrapper(this.sidebar);
+          this.otherColumn = false;
+          this.otherColumnInner = false;
 
           // Container wrapper of the sidebar.
           if (this.options.containerSelector) {
@@ -213,6 +210,22 @@
             });
 
             if (!containers.length) throw new Error("The container does not contains on the sidebar.");
+          }
+
+          if (this.options.otherColumnSelector) {
+            var columns = document.querySelectorAll(this.options.otherColumnSelector);
+            columns = Array.prototype.slice.call(columns);
+
+            columns.some(function (column) {
+              if (column === _this2.primaryColumn || !_this2.container.contains(column)) return;
+              if (_this2.primaryColumn.contains(column) || column.contains(_this2.primaryColumn)) return;
+              _this2.otherColumn = column;
+              return true;
+            });
+
+            if (!this.otherColumn) throw new Error("The other column must be another element inside the container.");
+
+            this.otherColumnInner = this._ensureInnerWrapper(this.otherColumn);
           }
 
           // Get scroll container, if provided
@@ -250,15 +263,57 @@
           window.addEventListener('resize', this.handleEvent, { passive: true, capture: false });
           this.eventTarget.addEventListener('scroll', this.handleEvent, { passive: true, capture: false });
 
-          this.sidebar.addEventListener('update' + EVENT_KEY, this.handleEvent);
+          this.primaryColumn.addEventListener('update' + EVENT_KEY, this.handleEvent);
 
           if ('undefined' !== typeof ResizeObserver) {
             this.resizeObserver = new ResizeObserver(function () {
               return _this3.handleEvent();
             });
-            this.resizeObserver.observe(this.sidebarInner);
+            this.resizeObserver.observe(this.primaryInner);
             this.resizeObserver.observe(this.container);
+            if (this.otherColumnInner) this.resizeObserver.observe(this.otherColumnInner);
           }
+        }
+      }, {
+        key: '_ensureInnerWrapper',
+        value: function _ensureInnerWrapper(column) {
+          var inner = this.options.innerWrapperSelector && column.querySelector(this.options.innerWrapperSelector);
+
+          if (!inner) {
+            inner = document.createElement('div');
+            inner.setAttribute('class', 'inner-wrapper-sticky');
+            column.appendChild(inner);
+
+            while (column.firstChild != inner) {
+              inner.appendChild(column.firstChild);
+            }
+          }
+
+          return inner;
+        }
+      }, {
+        key: '_selectStickyColumn',
+        value: function _selectStickyColumn() {
+          if (!this.otherColumn) return;
+
+          var primaryHeight = this._columnContentHeight(this.primaryColumn, this.primaryInner);
+          var otherHeight = this._columnContentHeight(this.otherColumn, this.otherColumnInner);
+          var column = primaryHeight <= otherHeight ? this.primaryColumn : this.otherColumn;
+          var inner = column === this.primaryColumn ? this.primaryInner : this.otherColumnInner;
+
+          if (column === this.sidebar) return;
+
+          this._clearColumn(this.sidebar, this.sidebarInner);
+          this.sidebar = column;
+          this.sidebarInner = inner;
+          this.affixedType = 'STATIC';
+          this.dimensions.translateY = 0;
+          this._reStyle = true;
+        }
+      }, {
+        key: '_columnContentHeight',
+        value: function _columnContentHeight(column, inner) {
+          return inner.offsetHeight + this._getExtraHeight(column, inner);
         }
       }, {
         key: 'handleEvent',
@@ -269,6 +324,7 @@
         key: 'calcDimensions',
         value: function calcDimensions() {
           if (this._breakpoint) return;
+          this._selectStickyColumn();
           var dims = this.dimensions;
 
           // Container of sticky sidebar dimensions.
@@ -283,7 +339,7 @@
           // Height the sidebar's content needs in the container. Measured from the inner
           // wrapper rather than the sidebar itself, which may be stretched to the container
           // height (flex/grid) or pinned to the inner wrapper's height while affixed.
-          dims.sidebarOuterHeight = dims.sidebarHeight + this._getSidebarExtraHeight();
+          dims.sidebarOuterHeight = this._columnContentHeight(this.sidebar, this.sidebarInner);
 
           // Screen viewport dimensions.
           dims.viewportHeight = window.innerHeight;
@@ -294,13 +350,13 @@
           this._calcDimensionsWithScroll();
         }
       }, {
-        key: '_getSidebarExtraHeight',
-        value: function _getSidebarExtraHeight() {
+        key: '_getExtraHeight',
+        value: function _getExtraHeight(column, innerElement) {
           var px = function (style, property) {
             return Math.max(0, parseFloat(style[property]) || 0);
           };
-          var sidebar = getComputedStyle(this.sidebar);
-          var inner = getComputedStyle(this.sidebarInner);
+          var sidebar = getComputedStyle(column);
+          var inner = getComputedStyle(innerElement);
 
           var extra = px(sidebar, 'paddingTop') + px(sidebar, 'paddingBottom') + px(sidebar, 'borderTopWidth') + px(sidebar, 'borderBottomWidth') + px(inner, 'marginTop') + px(inner, 'marginBottom');
 
@@ -309,8 +365,8 @@
           var collapses = 'block' === inner.display && 'visible' === inner.overflow && ('static' === inner.position || 'relative' === inner.position);
 
           if (collapses) {
-            var first = this.sidebarInner.firstElementChild;
-            var last = this.sidebarInner.lastElementChild;
+            var first = innerElement.firstElementChild;
+            var last = innerElement.lastElementChild;
 
             if (first && !px(inner, 'paddingTop') && !px(inner, 'borderTopWidth')) extra += px(getComputedStyle(first), 'marginTop');
 
@@ -513,8 +569,12 @@
           var style = this._getStyle(affixType);
 
           if ((this.affixedType != affixType || force) && affixType) {
-            var affixEvent = 'affix.' + affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
-            StickySidebar.eventTrigger(this.sidebar, affixEvent);
+            var typeChanged = this.affixedType != affixType;
+
+            if (typeChanged) {
+              var affixEvent = 'affix.' + affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
+              StickySidebar.eventTrigger(this.sidebar, affixEvent);
+            }
 
             if ('STATIC' === affixType) StickySidebar.removeClass(this.sidebar, this.options.stickyClass);else StickySidebar.addClass(this.sidebar, this.options.stickyClass);
 
@@ -528,8 +588,10 @@
               this.sidebarInner.style[_key] = style.inner[_key] + _unit;
             }
 
-            var affixedEvent = 'affixed.' + affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
-            StickySidebar.eventTrigger(this.sidebar, affixedEvent);
+            if (typeChanged) {
+              var affixedEvent = 'affixed.' + affixType.toLowerCase().replace('viewport-', '') + EVENT_KEY;
+              StickySidebar.eventTrigger(this.sidebar, affixedEvent);
+            }
           } else {
             if (this._initialized) this.sidebarInner.style.left = style.inner.left;
           }
@@ -544,9 +606,10 @@
             this._breakpoint = true;
             this.affixedType = 'STATIC';
 
-            this.sidebar.removeAttribute('style');
-            StickySidebar.removeClass(this.sidebar, this.options.stickyClass);
-            this.sidebarInner.removeAttribute('style');
+            this._clearColumn(this.primaryColumn, this.primaryInner);
+            if (this.otherColumn) this._clearColumn(this.otherColumn, this.otherColumnInner);
+            this.sidebar = this.primaryColumn;
+            this.sidebarInner = this.primaryInner;
           } else {
             this._breakpoint = false;
           }
@@ -558,7 +621,12 @@
 
           var event = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-          if (this._running) return;
+          // A resize can arrive while a scroll update is waiting for its frame. Dropping it
+          // would miss a column-height change. Remember it and run it after this frame.
+          if (this._running) {
+            if (!this._pendingEvent || 'scroll' === this._pendingEvent.type) this._pendingEvent = event;
+            return;
+          }
           this._running = true;
 
           (function (eventType) {
@@ -583,6 +651,11 @@
                   break;
               }
               _this4._running = false;
+              if (_this4._pendingEvent) {
+                var pending = _this4._pendingEvent;
+                _this4._pendingEvent = null;
+                _this4.updateSticky(pending);
+              }
             });
           })(event.type);
         }
@@ -609,7 +682,7 @@
           window.removeEventListener('resize', this.handleEvent, { capture: false });
           this.eventTarget.removeEventListener('scroll', this.handleEvent, { capture: false });
 
-          this.sidebar.removeEventListener('update' + EVENT_KEY, this.handleEvent);
+          this.primaryColumn.removeEventListener('update' + EVENT_KEY, this.handleEvent);
 
           if (this.resizeObserver) {
             this.resizeObserver.disconnect();
@@ -619,21 +692,30 @@
           if (this._running) {
             cancelAnimationFrame(this._animationFrame);
             this._running = false;
+            this._pendingEvent = null;
           }
 
-          this.sidebar.classList.remove(this.options.stickyClass);
-          this.sidebar.style.minHeight = '';
+          this._clearColumn(this.primaryColumn, this.primaryInner);
+          if (this.otherColumn) this._clearColumn(this.otherColumn, this.otherColumnInner);
+        }
+      }, {
+        key: '_clearColumn',
+        value: function _clearColumn(column, inner) {
+          if (!column) return;
 
-          var styleReset = { inner: {}, outer: {} };
+          column.classList.remove(this.options.stickyClass);
+          column.style.minHeight = '';
+          column.style.height = '';
+          column.style.position = '';
 
-          styleReset.inner = { position: '', top: '', left: '', bottom: '', width: '', transform: '' };
-          styleReset.outer = { height: '', position: '' };
+          if (!inner) return;
 
-          for (var key in styleReset.outer) {
-            this.sidebar.style[key] = styleReset.outer[key];
-          }for (var _key2 in styleReset.inner) {
-            this.sidebarInner.style[_key2] = styleReset.inner[_key2];
-          }
+          inner.style.position = '';
+          inner.style.top = '';
+          inner.style.left = '';
+          inner.style.bottom = '';
+          inner.style.width = '';
+          inner.style.transform = '';
         }
       }], [{
         key: 'supportTransform',

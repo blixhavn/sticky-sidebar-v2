@@ -82,18 +82,19 @@ var sidebar = new stickySidebar('#sidebar', {topSpacing: 20});
 
 #### Sidebar taller than the content
 
-The plugin sticks one element inside its container. When the sidebar is taller than the rest of that container, sticking the sidebar has nowhere to go, so it stays put. Stick the shorter column instead. In this example the article is the sticky element:
+The plugin sticks one element, and only while it is shorter than its container. A sidebar that is already the tallest column stays put. Which column is taller depends on the content, and that can change after load. Pass the other column as ``otherColumnSelector`` and the shorter one sticks. It switches when either column changes height.
 
 {% highlight javascript %}
-var article = new StickySidebar('#content', {
+var sidebar = new StickySidebar('#sidebar', {
     containerSelector: '.container',
-    innerWrapperSelector: '.content__inner',
+    innerWrapperSelector: '.column__inner',
+    otherColumnSelector: '#content',
     topSpacing: 20,
     bottomSpacing: 20
 });
 {% endhighlight javascript %}
 
-The article stays in view while the long sidebar scrolls past, and stops at the bottom of the container.
+Both columns need an inner wrapper with that selector. In the demo the article starts shorter, so the article sticks. Adding paragraphs until the article is taller makes the sidebar stick instead.
 
 <div class="box-demo-button-wrapper">
 	<button>Scroll It!</button>
