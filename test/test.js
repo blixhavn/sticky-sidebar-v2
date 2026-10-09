@@ -944,6 +944,44 @@ describe('StickySidebar', () => {
       });
     });
 
+    it('Should stick the new column when the last scroll was upward.', () => {
+      columns();
+      document.querySelector('.sidebar-body').style.height = '400px';
+      document.querySelector('.content-body').style.height = '800px';
+
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container',
+        innerWrapperSelector: '.column__inner',
+        otherColumnSelector: '.content'
+      });
+      const content = document.querySelector('.content');
+      let released = 0;
+      document.querySelector('.sidebar').addEventListener('affixed.static.stickySidebar', () => released++);
+
+      window.scrollTo(0, 300);
+      window.dispatchEvent(new Event('scroll'));
+
+      return settled(stickySidebar).then(() => {
+        assert.equal(stickySidebar.direction, 'down');
+        window.scrollTo(0, 250);
+        window.dispatchEvent(new Event('scroll'));
+        return settled(stickySidebar);
+      }).then(() => {
+        assert.equal(stickySidebar.direction, 'up');
+        assert.isTrue(document.querySelector('.sidebar').classList.contains('is-affixed'));
+        document.querySelector('.sidebar-body').style.height = '1200px';
+        stickySidebar.updateSticky();
+        return settled(stickySidebar);
+      }).then(() => {
+        assert.equal(stickySidebar.direction, 'up');
+        assert.equal(stickySidebar.sidebar, content);
+        assert.equal(stickySidebar.affixedType, 'VIEWPORT-TOP');
+        assert.isTrue(content.classList.contains('is-affixed'));
+        assert.isNotTrue(document.querySelector('.sidebar').classList.contains('is-affixed'));
+        assert.equal(released, 1);
+      });
+    });
+
     it('Should not keep switching while neither column changes.', () => {
       columns();
       const stickySidebar = new StickySidebar('.sidebar', {
