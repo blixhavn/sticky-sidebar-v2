@@ -43,7 +43,7 @@
 
   /**
    * Sticky Sidebar v2 JavaScript Plugin.
-   * @version 1.2.0
+   * @version 1.3.0
    * @author Øystein Blixhavn <oystein@blixhavn.no>
    * @license The MIT License (MIT)
    */
@@ -54,7 +54,7 @@
     // ---------------------------------
     //
     var EVENT_KEY = '.stickySidebar';
-    var VERSION = '1.2.0';
+    var VERSION = '1.3.0';
 
     var DEFAULTS = {
       /**
