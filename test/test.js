@@ -982,6 +982,37 @@ describe('StickySidebar', () => {
       });
     });
 
+    it('Should not stick a column that is not displayed.', () => {
+      columns();
+      document.querySelector('.container').style.minHeight = '2000px';
+      const stickySidebar = new StickySidebar('.sidebar', {
+        containerSelector: '.container',
+        innerWrapperSelector: '.column__inner',
+        otherColumnSelector: '.content'
+      });
+      const content = document.querySelector('.content');
+
+      window.scrollTo(0, 300);
+      window.dispatchEvent(new Event('scroll'));
+
+      return settled(stickySidebar).then(() => {
+        assert.equal(stickySidebar.sidebar, content);
+        content.style.display = 'none';
+        stickySidebar.updateSticky();
+        return settled(stickySidebar);
+      }).then(() => {
+        assert.equal(stickySidebar.sidebar, document.querySelector('.sidebar'));
+        assert.isTrue(document.querySelector('.sidebar').classList.contains('is-affixed'));
+        assert.isNotTrue(content.classList.contains('is-affixed'));
+        content.style.display = '';
+        stickySidebar.updateSticky();
+        return settled(stickySidebar);
+      }).then(() => {
+        assert.equal(stickySidebar.sidebar, content);
+        assert.isTrue(content.classList.contains('is-affixed'));
+      });
+    });
+
     it('Should not keep switching while neither column changes.', () => {
       columns();
       const stickySidebar = new StickySidebar('.sidebar', {
